@@ -10,6 +10,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>ZPixiv-API</module>
+        <module>ZPixiv-UI</module>
     </modules>
 
     <properties>
