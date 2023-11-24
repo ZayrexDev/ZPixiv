@@ -1,12 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0"
-      prefWidth="600.0" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1">
+
+<HBox fx:id="main" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@../css/main.css" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.MainController">
     <children>
-        <VBox prefHeight="200.0" prefWidth="100.0"/>
-        <VBox maxWidth="1.7976931348623157E308" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS"/>
+        <VBox maxHeight="1.7976931348623157E308" maxWidth="50.0" minWidth="50.0" prefHeight="400.0" prefWidth="50.0" HBox.hgrow="NEVER">
+         <children>
+            <ImageView fitHeight="40.0" fitWidth="40.0" onKeyPressed="#profileBtnOnAction" pickOnBounds="true" preserveRatio="true">
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </VBox.margin>
+            </ImageView>
+            <Separator prefWidth="200.0" />
+            <VBox alignment="TOP_CENTER" spacing="5.0" VBox.vgrow="ALWAYS">
+               <children>
+                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#menuBtnOnAction" text="🏠" VBox.vgrow="ALWAYS" />
+                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#discBtnOnAction" text="🌏" VBox.vgrow="ALWAYS" />
+                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#folBtnOnAction" text="🔔" VBox.vgrow="ALWAYS" />
+               </children>
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </VBox.margin>
+            </VBox>
+            <VBox spacing="5.0">
+               <children>
+                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#setBtnOnAction" text="⚙" VBox.vgrow="ALWAYS">
+                     <VBox.margin>
+                        <Insets top="5.0" />
+                     </VBox.margin>
+                  </Button>
+                  <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#aboutBtnOnAction" text="ℹ" VBox.vgrow="ALWAYS" />
+               </children>
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </VBox.margin>
+            </VBox>
+         </children>
+         <HBox.margin>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </HBox.margin></VBox>
+        <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+         <children>
+            <AnchorPane>
+               <children>
+                  <HBox alignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <TextField fx:id="topSearchBar" alignment="CENTER" prefWidth="300.0" promptText="搜索" />
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <Button mnemonicParsing="false" onAction="#minBtnOnAction" text="-" />
+                        <Button mnemonicParsing="false" onAction="#exitBtnOnAction" text="x" />
+                     </children>
+                  </HBox>
+               </children>
+               <VBox.margin>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </VBox.margin>
+            </AnchorPane>
+            <AnchorPane fx:id="contentPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
+         </children></VBox>
     </children>
 </HBox>
