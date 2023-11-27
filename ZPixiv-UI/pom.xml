@@ -44,5 +44,15 @@
             <artifactId>javafx-fxml</artifactId>
             <version>21.0.1</version>
         </dependency>
+        <dependency>
+            <groupId>xyz.zcraft.zpixiv.api</groupId>
+            <artifactId>ZPixiv-API</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
+        </dependency>
     </dependencies>
 </project>

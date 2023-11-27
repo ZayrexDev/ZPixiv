@@ -10,6 +10,7 @@ import org.jsoup.select.Elements;
 import xyz.zcraft.zpixiv.api.artwork.GifData;
 import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
 import xyz.zcraft.zpixiv.api.user.LoginSession;
+import xyz.zcraft.zpixiv.api.user.PixivUser;
 
 import java.io.IOException;
 import java.net.Proxy;
@@ -210,15 +211,25 @@ public class Pixiv {
         HashMap<String, String> cookie = parseCookie(session.getCookieString());
         Connection c = Jsoup.connect(getArtworkPageUrl(id)).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
         if (proxy != null) c.proxy(proxy);
-        JSONObject jsonObject = JSONObject.parseObject(Objects.requireNonNull(c.get().head().getElementById("meta-preload-data")).attr("content")).getJSONObject("illust").getJSONObject(id);
-        PixivArtwork pixivArtwork = jsonObject.to(PixivArtwork.class);
-        pixivArtwork.setOrigJson(jsonObject);
-        JSONArray jsonArray = jsonObject.getJSONObject("tags").getJSONArray("tags");
+
+        final JSONObject content = JSONObject.parseObject(Objects.requireNonNull(c.get().head().getElementById("meta-preload-data")).attr("content"));
+
+        JSONObject illustJsonObj = content.getJSONObject("illust").getJSONObject(id);
+
+        PixivArtwork pixivArtwork = illustJsonObj.to(PixivArtwork.class);
+
+        pixivArtwork.setOrigJson(illustJsonObj);
+
+        JSONArray jsonArray = illustJsonObj.getJSONObject("tags").getJSONArray("tags");
         LinkedHashSet<String> tags = new LinkedHashSet<>();
         for (int i = 0; i < jsonArray.size(); i++) {
             tags.add(jsonArray.getJSONObject(i).getString("tag"));
         }
         pixivArtwork.setTranslatedTags(tags);
+
+        final JSONObject userJsonObj = content.getJSONObject("user").getJSONObject(pixivArtwork.getUserId());
+        pixivArtwork.setAuthor(userJsonObj.to(PixivUser.class));
+
         return pixivArtwork;
     }
 
@@ -227,9 +238,14 @@ public class Pixiv {
         Connection c = Jsoup.connect(getArtworkPageUrl(artwork.getId())).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
         if (proxy != null) c.proxy(proxy);
 
-        JSONObject jsonObject = JSONObject.parseObject(Objects.requireNonNull(c.get().head().getElementById("meta-preload-data")).attr("content")).getJSONObject("illust").getJSONObject(artwork.getId());
+        final JSONObject content = JSONObject.parseObject(Objects.requireNonNull(c.get().head().getElementById("meta-preload-data")).attr("content"));
+        JSONObject jsonObject = content.getJSONObject("illust").getJSONObject(artwork.getId());
+
         artwork.setBookmarkCount(jsonObject.getInteger("bookmarkCount"));
         artwork.setLikeCount(jsonObject.getInteger("likeCount"));
+
+        final JSONObject userJsonObj = content.getJSONObject("user").getJSONObject(artwork.getUserId());
+        artwork.setAuthor(userJsonObj.to(PixivUser.class));
     }
 
     public static List<PixivArtwork> getDiscovery(LoginSession session, Mode mode, int limit, Proxy proxy) throws IOException {

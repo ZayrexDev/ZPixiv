@@ -3,6 +3,7 @@ module ZPixiv.UI {
     requires javafx.controls;
     requires javafx.fxml;
     requires org.apache.logging.log4j.core;
+    requires ZPixiv.API;
 
     exports xyz.zcraft.zpixiv.ui;
     exports xyz.zcraft.zpixiv.ui.controller;

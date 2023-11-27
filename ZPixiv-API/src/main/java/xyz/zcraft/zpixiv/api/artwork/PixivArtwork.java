@@ -5,6 +5,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.annotation.JSONField;
 import lombok.Data;
 import xyz.zcraft.zpixiv.api.Pixiv;
+import xyz.zcraft.zpixiv.api.user.PixivUser;
 
 import java.util.LinkedHashSet;
 
@@ -73,4 +74,6 @@ public class PixivArtwork {
     private JSONObject origJson;
     private String ranking;
     private String search;
+
+    private PixivUser author;
 }

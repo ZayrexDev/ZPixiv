@@ -8,6 +8,7 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 
 import java.io.IOException;
+import java.net.Proxy;
 import java.util.HashMap;
 import java.util.Objects;
 
@@ -19,11 +20,11 @@ public class LoginSession {
     private final PixivUser userData;
     private final String cookieString;
 
-    public LoginSession(String cookieString) throws IOException {
+    public LoginSession(String cookieString, Proxy proxy) throws IOException {
         this.cookieString = cookieString;
         HashMap<String, String> cookieMap = parseCookie(cookieString);
         Connection c = Jsoup.connect("https://www.pixiv.net").ignoreContentType(true).method(Connection.Method.GET).cookies(cookieMap).timeout(10 * 1000);
-
+        if(proxy != null) c.proxy(proxy);
         String text = Objects.requireNonNull(c.get().getElementById("meta-global-data")).attr("content");
         final JSONObject jsonObject = JSONObject.parseObject(text);
         PixivUser userData = jsonObject.getJSONObject("userData").to(PixivUser.class);
