@@ -12,7 +12,7 @@ import java.net.Proxy;
 import java.util.HashMap;
 import java.util.Objects;
 
-import static xyz.zcraft.zpixiv.api.Pixiv.parseCookie;
+import static xyz.zcraft.zpixiv.api.PixivClient.parseCookie;
 
 @Getter
 public class LoginSession {

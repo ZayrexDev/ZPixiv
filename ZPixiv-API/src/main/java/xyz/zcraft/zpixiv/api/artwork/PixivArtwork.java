@@ -4,10 +4,11 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.annotation.JSONField;
 import lombok.Data;
-import xyz.zcraft.zpixiv.api.Pixiv;
+import xyz.zcraft.zpixiv.api.PixivClient;
 import xyz.zcraft.zpixiv.api.user.PixivUser;
 
-import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 @Data
 public class PixivArtwork {
@@ -66,10 +67,10 @@ public class PixivArtwork {
     @JSONField(name = "likeCount")
     private int likeCount;
 
-    private LinkedHashSet<String> translatedTags = new LinkedHashSet<>();
-    private String imageUrl;
+    private Set<String> translatedTags;
+    private List<String> imageUrls;
     private GifData gifData;
-    private Pixiv.From from;
+    private PixivClient.From from;
 
     private JSONObject origJson;
     private String ranking;

@@ -4,7 +4,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import xyz.zcraft.zpixiv.api.Pixiv;
+import xyz.zcraft.zpixiv.api.PixivClient;
 import xyz.zcraft.zpixiv.api.user.LoginSession;
 import xyz.zcraft.zpixiv.ui.controller.ArtworkController;
 import xyz.zcraft.zpixiv.ui.util.ResourceLoader;
@@ -17,6 +17,7 @@ public class Test extends Application {
     private static final String COOKIE = "";
     private static final String ID = "";
     private static final Proxy PROXY = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(0));
+
     @Override
     public void start(Stage stage) throws Exception {
         final URL url = ResourceLoader.load("fxml/Artwork.fxml");
@@ -26,7 +27,9 @@ public class Test extends Application {
 
         final ArtworkController controller = loader.getController();
 
-        controller.load(Pixiv.getArtwork(new LoginSession(COOKIE, PROXY), ID, PROXY));
+        PixivClient client = new PixivClient(COOKIE, PROXY);
+
+        controller.load(client, client.getArtwork(ID));
 
         stage.show();
     }

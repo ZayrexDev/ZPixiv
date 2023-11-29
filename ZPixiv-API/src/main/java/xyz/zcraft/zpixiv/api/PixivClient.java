@@ -3,6 +3,7 @@ package xyz.zcraft.zpixiv.api;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
@@ -16,7 +17,7 @@ import java.io.IOException;
 import java.net.Proxy;
 import java.util.*;
 
-public class Pixiv {
+public class PixivClient {
     private static final String TOP = "https://www.pixiv.net/ajax/top/illust?mode=all";
     private static final String RELATED = "https://www.pixiv.net/ajax/illust/%s/recommend/init?limit=%d";
     private static final String ARTWORK = "https://www.pixiv.net/artworks/";
@@ -30,6 +31,27 @@ public class Pixiv {
     private static final String SEARCH_ILLUST = "https://www.pixiv.net/ajax/search/illustrations/%s?word=%s&mode=%s&p=%d";
     private static final String SEARCH_MANGA = "https://www.pixiv.net/ajax/search/manga/%s?word=%s&mode=%s&p=%d";
     private static final String RANKING = "https://www.pixiv.net/ranking.php";
+    private final String cookieString;
+    @Getter
+    private final Proxy proxy;
+    private final PixivUser userData;
+
+    public PixivClient(String cookieString, Proxy proxy) throws IOException {
+        this.proxy = proxy;
+        this.cookieString = cookieString;
+        HashMap<String, String> cookieMap = parseCookie(cookieString);
+        Connection c = Jsoup.connect("https://www.pixiv.net").ignoreContentType(true).method(Connection.Method.GET).cookies(cookieMap).timeout(10 * 1000);
+        if(proxy != null) c.proxy(proxy);
+        String text = Objects.requireNonNull(c.get().getElementById("meta-global-data")).attr("content");
+        final JSONObject jsonObject = JSONObject.parseObject(text);
+        PixivUser userData = jsonObject.getJSONObject("userData").to(PixivUser.class);
+        userData.setToken(jsonObject.getString("token"));
+        if (userData.getName() != null && userData.getId() != null) {
+            this.userData = userData;
+        } else {
+            throw new RuntimeException("Can't login");
+        }
+    }
 
     public static HashMap<String, String> parseCookie(String cookieString) {
         if (cookieString == null) return new HashMap<>();
@@ -59,253 +81,8 @@ public class Pixiv {
         }
     }
 
-    public static LinkedList<String> getRankingIDs(LoginSession session, String major, String minor, Proxy proxy) throws IOException {
-        String url = RANKING.concat("?mode=").concat(major).concat(minor != null && !minor.isEmpty() ? "&content=".concat(minor) : "");
-        HashMap<String, String> cookie = parseCookie(session.getCookieString());
-        Connection c = Jsoup.connect(url).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-
-        if (proxy != null) c.proxy(proxy);
-
-        Elements rankingItems = c.get().body().getElementsByClass("ranking-item");
-        LinkedList<String> ids = new LinkedList<>();
-        for (Element rankingItem : rankingItems) {
-            String href = rankingItem.getElementsByClass("ranking-image-item").get(0).getElementsByTag("a").get(0).attr("href");
-            String id = href.substring(href.lastIndexOf("/") + 1);
-            ids.add(id);
-        }
-
-        return ids;
-    }
-
-    public static List<PixivArtwork> searchTopArtworks(LoginSession session, String keyword, Proxy proxy) throws IOException {
-        HashMap<String, String> cookie = parseCookie(session.getCookieString());
-        Connection c = Jsoup.connect(String.format(SEARCH_TOP, keyword).concat("?lang=").concat(getPixivLanguageTag())).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-
-        if (proxy != null) c.proxy(proxy);
-
-        String s = c.get().body().ownText();
-        JSONObject body = JSONObject.parseObject(s).getJSONObject("body");
-
-        JSONObject popular = body.getJSONObject("popular");
-
-        LinkedList<PixivArtwork> artworks = new LinkedList<>();
-        for (Object o : popular.getJSONArray("recent")) {
-            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
-            e.setSearch(keyword);
-            e.setFrom(From.Search);
-            artworks.add(e);
-        }
-        for (Object o : popular.getJSONArray("permanent")) {
-            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
-            e.setSearch(keyword);
-            e.setFrom(From.Search);
-            artworks.add(e);
-        }
-        for (Object o : body.getJSONObject("illustManga").getJSONArray("data")) {
-            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
-            e.setSearch(keyword);
-            e.setFrom(From.Search);
-            artworks.add(e);
-        }
-
-        return artworks;
-    }
-
-    public static List<PixivArtwork> searchIllustArtworks(LoginSession session, String keyword, Mode mode, int page, Proxy proxy) throws IOException {
-        HashMap<String, String> cookie = parseCookie(session.getCookieString());
-        String url = String.format(SEARCH_ILLUST, keyword, keyword, mode.argStr, page).concat("&lang=").concat(getPixivLanguageTag());
-        Connection c = Jsoup.connect(url).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-
-        if (proxy != null) c.proxy(proxy);
-
-        String s = c.get().body().ownText();
-        JSONObject body = JSONObject.parseObject(s).getJSONObject("body");
-
-        JSONObject popular = body.getJSONObject("popular");
-
-        LinkedList<PixivArtwork> artworks = new LinkedList<>();
-        for (Object o : popular.getJSONArray("recent")) {
-            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
-            e.setSearch(keyword);
-            e.setFrom(From.Search);
-            artworks.add(e);
-        }
-        for (Object o : popular.getJSONArray("permanent")) {
-            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
-            e.setSearch(keyword);
-            e.setFrom(From.Search);
-            artworks.add(e);
-        }
-        for (Object o : body.getJSONObject("illust").getJSONArray("data")) {
-            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
-            e.setSearch(keyword);
-            e.setFrom(From.Search);
-            artworks.add(e);
-        }
-
-        return artworks;
-    }
-
-    public static List<PixivArtwork> searchMangaArtworks(LoginSession session, String keyword, Mode mode, int page, Proxy proxy) throws IOException {
-        HashMap<String, String> cookie = parseCookie(session.getCookieString());
-        String url = String.format(SEARCH_MANGA, keyword, keyword, mode.argStr, page).concat("&lang=").concat(getPixivLanguageTag());
-        Connection c = Jsoup.connect(url).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-
-        if (proxy != null) c.proxy(proxy);
-
-        String s = c.get().body().ownText();
-        JSONObject body = JSONObject.parseObject(s).getJSONObject("body");
-
-        JSONObject popular = body.getJSONObject("popular");
-
-        LinkedList<PixivArtwork> artworks = new LinkedList<>();
-        for (Object o : popular.getJSONArray("recent")) {
-            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
-            e.setSearch(keyword);
-            e.setFrom(From.Search);
-            artworks.add(e);
-        }
-        for (Object o : popular.getJSONArray("permanent")) {
-            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
-            e.setSearch(keyword);
-            e.setFrom(From.Search);
-            artworks.add(e);
-        }
-        for (Object o : body.getJSONObject("manga").getJSONArray("data")) {
-            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
-            e.setSearch(keyword);
-            e.setFrom(From.Search);
-            artworks.add(e);
-        }
-
-        return artworks;
-    }
-
-    public static GifData getGifData(LoginSession session, PixivArtwork artwork, Proxy proxy) throws IOException {
-        HashMap<String, String> cookie = parseCookie(session.getCookieString());
-        Connection c = Jsoup.connect(String.format(GIF_DATA, artwork.getId()).concat("?lang=").concat(getPixivLanguageTag())).ignoreContentType(true).cookies(cookie).method(Connection.Method.GET).timeout(10 * 1000);
-        if (proxy != null) c.proxy(proxy);
-        JSONObject body = JSONObject.parseObject(c.get().body().ownText()).getJSONObject("body");
-        GifData gifData = body.to(GifData.class);
-        artwork.setGifData(gifData);
-        return gifData;
-    }
-
-    public static LinkedList<String> getFullPages(LoginSession session, PixivArtwork artwork, Proxy proxy) throws IOException {
-        HashMap<String, String> cookie = parseCookie(session.getCookieString());
-        Connection c = Jsoup.connect(String.format(PAGES, artwork.getId()).concat("?lang=").concat(getPixivLanguageTag())).ignoreContentType(true).cookies(cookie).method(Connection.Method.GET).timeout(10 * 1000);
-        if (proxy != null) c.proxy(proxy);
-        LinkedList<String> urls = new LinkedList<>();
-        JSONArray body = JSONObject.parseObject(c.get().body().ownText()).getJSONArray("body");
-        for (int i = 0; i < body.size(); i++) {
-            urls.add(body.getJSONObject(i).getJSONObject("urls").getString("original"));
-        }
-        return urls;
-    }
-
     public static String getArtworkPageUrl(String id) {
         return ARTWORK + id;
-    }
-
-    public static PixivArtwork getArtwork(LoginSession session, String id, Proxy proxy) throws IOException {
-        HashMap<String, String> cookie = parseCookie(session.getCookieString());
-        Connection c = Jsoup.connect(getArtworkPageUrl(id)).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-        if (proxy != null) c.proxy(proxy);
-
-        final JSONObject content = JSONObject.parseObject(Objects.requireNonNull(c.get().head().getElementById("meta-preload-data")).attr("content"));
-
-        JSONObject illustJsonObj = content.getJSONObject("illust").getJSONObject(id);
-
-        PixivArtwork pixivArtwork = illustJsonObj.to(PixivArtwork.class);
-
-        pixivArtwork.setOrigJson(illustJsonObj);
-
-        JSONArray jsonArray = illustJsonObj.getJSONObject("tags").getJSONArray("tags");
-        LinkedHashSet<String> tags = new LinkedHashSet<>();
-        for (int i = 0; i < jsonArray.size(); i++) {
-            tags.add(jsonArray.getJSONObject(i).getString("tag"));
-        }
-        pixivArtwork.setTranslatedTags(tags);
-
-        final JSONObject userJsonObj = content.getJSONObject("user").getJSONObject(pixivArtwork.getUserId());
-        pixivArtwork.setAuthor(userJsonObj.to(PixivUser.class));
-
-        return pixivArtwork;
-    }
-
-    public static void getFullData(LoginSession session, PixivArtwork artwork, Proxy proxy) throws IOException {
-        HashMap<String, String> cookie = parseCookie(session.getCookieString());
-        Connection c = Jsoup.connect(getArtworkPageUrl(artwork.getId())).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-        if (proxy != null) c.proxy(proxy);
-
-        final JSONObject content = JSONObject.parseObject(Objects.requireNonNull(c.get().head().getElementById("meta-preload-data")).attr("content"));
-        JSONObject jsonObject = content.getJSONObject("illust").getJSONObject(artwork.getId());
-
-        artwork.setBookmarkCount(jsonObject.getInteger("bookmarkCount"));
-        artwork.setLikeCount(jsonObject.getInteger("likeCount"));
-
-        final JSONObject userJsonObj = content.getJSONObject("user").getJSONObject(artwork.getUserId());
-        artwork.setAuthor(userJsonObj.to(PixivUser.class));
-    }
-
-    public static List<PixivArtwork> getDiscovery(LoginSession session, Mode mode, int limit, Proxy proxy) throws IOException {
-        HashMap<String, String> cookie = parseCookie(session.getCookieString());
-        Connection c = Jsoup.connect(String.format(DISCOVERY, mode.argStr, limit).concat("&lang=").concat(getPixivLanguageTag())).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-
-        if (proxy != null) c.proxy(proxy);
-
-        return parseArtworks(c.get().body().ownText());
-    }
-
-    public static Set<String> fetchUser(String uid, Proxy proxy) throws IOException {
-        Connection c = Jsoup.connect(String.format(USER, uid).concat("lang=").concat(getPixivLanguageTag())).ignoreContentType(true).method(Connection.Method.GET).timeout(10 * 1000);
-        if (proxy != null) c.proxy(proxy);
-
-        JSONObject jsonObject = JSONObject.parseObject(c.get().body().ownText()).getJSONObject("body").getJSONObject("illusts");
-
-        return new HashSet<>(jsonObject.keySet());
-    }
-
-    public static HashMap<String, String> getUserTagTranslations(String queryString, Proxy proxy) throws IOException {
-        HashMap<String, String> tagTranslation = new HashMap<>();
-        Connection c = Jsoup.connect(String.format(USER_TAGS, queryString)).ignoreContentType(true).method(Connection.Method.GET).timeout(10 * 1000);
-        if (proxy != null) c.proxy(proxy);
-
-
-        String s = c.get().body().ownText();
-        for (Object o : JSONObject.parseObject(s).getJSONArray("body")) {
-            if (o instanceof JSONObject obj) {
-                tagTranslation.put(obj.getString("tag"), obj.getString("tag_translation"));
-            }
-        }
-
-        return tagTranslation;
-    }
-
-    public static List<PixivArtwork> getUserArtworks(String queryString, String uid, Proxy proxy) throws IOException {
-        LinkedList<PixivArtwork> artworks = new LinkedList<>();
-        Connection c = Jsoup.connect(String.format(USER_WORKS, uid, queryString)).ignoreContentType(true).method(Connection.Method.GET).timeout(10 * 1000);
-
-        if (proxy != null) c.proxy(proxy);
-
-        JSONObject obj = JSONObject.parseObject(c.get().body().ownText()).getJSONObject("body").getJSONObject("works");
-
-        HashMap<String, String> userTagTranslations = getUserTagTranslations(queryString, proxy);
-        LinkedHashSet<String> translatedTags = new LinkedHashSet<>();
-        for (String k : obj.keySet()) {
-            JSONObject jsonObject = obj.getJSONObject(k);
-            PixivArtwork a = jsonObject.to(PixivArtwork.class);
-            for (Object originalTag : a.getOriginalTags()) {
-                String s = Objects.requireNonNullElse(userTagTranslations.get(originalTag.toString()), originalTag.toString());
-                translatedTags.add(s);
-            }
-            a.setTranslatedTags(translatedTags);
-            a.setFrom(From.User);
-            a.setOrigJson(jsonObject);
-            artworks.add(a);
-        }
-
-        return artworks;
     }
 
     public static List<String> buildQueryString(Set<String> ids) {
@@ -330,14 +107,6 @@ public class Pixiv {
         return list;
     }
 
-    public static List<PixivArtwork> fetchMenu(LoginSession session, Proxy proxy) throws IOException {
-        HashMap<String, String> cookie = parseCookie(session.getCookieString());
-        Connection c = Jsoup.connect(TOP.concat("&lang=").concat(getPixivLanguageTag())).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-        if (proxy != null) c.proxy(proxy);
-
-        return parseArtworks(c.get().body().ownText(), true);
-    }
-
     public static LinkedList<PixivArtwork> parseArtworks(String jsonString, boolean classify) {
         LinkedList<PixivArtwork> artworks = new LinkedList<>();
         JSONObject bodyObject = JSONObject.parse(jsonString).getJSONObject("body");
@@ -347,6 +116,7 @@ public class Pixiv {
         for (int i = 0; i < illust.size(); i++) {
             JSONObject jsonObject = illust.getJSONObject(i);
             PixivArtwork a = jsonObject.to(PixivArtwork.class);
+            a.setTranslatedTags(new LinkedHashSet<>());
             for (Object t : a.getOriginalTags()) {
                 a.getTranslatedTags().add(translateTag(t.toString(), tran));
             }
@@ -370,6 +140,7 @@ public class Pixiv {
             PixivArtwork a = jsonObject.to(PixivArtwork.class);
             a.setOrigJson(jsonObject);
             a.setFrom(From.Discovery);
+            a.setTranslatedTags(new LinkedHashSet<>());
             for (Object t : a.getOriginalTags()) {
                 a.getTranslatedTags().add(translateTag(t.toString(), tran));
             }
@@ -400,29 +171,6 @@ public class Pixiv {
                 return tag;
             }
         }
-    }
-
-    public static List<PixivArtwork> getRelated(LoginSession session, PixivArtwork artwork, int limit, Proxy proxy) throws IOException {
-        HashMap<String, String> cookie = parseCookie(session.getCookieString());
-        Connection c = Jsoup.connect(String.format(RELATED, artwork.getId(), limit)).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-        if (proxy != null) c.proxy(proxy);
-
-        String jsonString = c.get().body().ownText();
-
-        LinkedList<PixivArtwork> artworks = new LinkedList<>();
-
-        JSONArray illusts = JSONObject.parse(jsonString).getJSONObject("body").getJSONArray("illusts");
-
-        for (int i = 0; i < illusts.size(); i++) {
-            JSONObject jsonObject = illusts.getJSONObject(i);
-            PixivArtwork object = jsonObject.to(PixivArtwork.class);
-            if (object.getTitle() == null) continue;
-            object.setOrigJson(jsonObject);
-            object.setFrom(From.Related);
-            artworks.add(object);
-        }
-
-        return artworks;
     }
 
     public static String getArtworkPageUrl(PixivArtwork artwork) {
@@ -489,6 +237,281 @@ public class Pixiv {
         }
 
         return art;
+    }
+
+    public LinkedList<String> getRankingIDs(String major, String minor) throws IOException {
+        String url = RANKING.concat("?mode=").concat(major).concat(minor != null && !minor.isEmpty() ? "&content=".concat(minor) : "");
+        HashMap<String, String> cookie = parseCookie(cookieString);
+        Connection c = Jsoup.connect(url).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
+
+        if (proxy != null) c.proxy(proxy);
+
+        Elements rankingItems = c.get().body().getElementsByClass("ranking-item");
+        LinkedList<String> ids = new LinkedList<>();
+        for (Element rankingItem : rankingItems) {
+            String href = rankingItem.getElementsByClass("ranking-image-item").get(0).getElementsByTag("a").get(0).attr("href");
+            String id = href.substring(href.lastIndexOf("/") + 1);
+            ids.add(id);
+        }
+
+        return ids;
+    }
+
+    public List<PixivArtwork> searchTopArtworks(String keyword) throws IOException {
+        HashMap<String, String> cookie = parseCookie(cookieString);
+        Connection c = Jsoup.connect(String.format(SEARCH_TOP, keyword).concat("?lang=").concat(getPixivLanguageTag())).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
+
+        if (proxy != null) c.proxy(proxy);
+
+        String s = c.get().body().ownText();
+        JSONObject body = JSONObject.parseObject(s).getJSONObject("body");
+
+        JSONObject popular = body.getJSONObject("popular");
+
+        LinkedList<PixivArtwork> artworks = new LinkedList<>();
+        for (Object o : popular.getJSONArray("recent")) {
+            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
+            e.setSearch(keyword);
+            e.setFrom(From.Search);
+            artworks.add(e);
+        }
+        for (Object o : popular.getJSONArray("permanent")) {
+            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
+            e.setSearch(keyword);
+            e.setFrom(From.Search);
+            artworks.add(e);
+        }
+        for (Object o : body.getJSONObject("illustManga").getJSONArray("data")) {
+            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
+            e.setSearch(keyword);
+            e.setFrom(From.Search);
+            artworks.add(e);
+        }
+
+        return artworks;
+    }
+
+    public List<PixivArtwork> searchIllustArtworks(String keyword, Mode mode, int page) throws IOException {
+        HashMap<String, String> cookie = parseCookie(cookieString);
+        String url = String.format(SEARCH_ILLUST, keyword, keyword, mode.argStr, page).concat("&lang=").concat(getPixivLanguageTag());
+        Connection c = Jsoup.connect(url).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
+
+        if (proxy != null) c.proxy(proxy);
+
+        String s = c.get().body().ownText();
+        JSONObject body = JSONObject.parseObject(s).getJSONObject("body");
+
+        JSONObject popular = body.getJSONObject("popular");
+
+        LinkedList<PixivArtwork> artworks = new LinkedList<>();
+        for (Object o : popular.getJSONArray("recent")) {
+            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
+            e.setSearch(keyword);
+            e.setFrom(From.Search);
+            artworks.add(e);
+        }
+        for (Object o : popular.getJSONArray("permanent")) {
+            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
+            e.setSearch(keyword);
+            e.setFrom(From.Search);
+            artworks.add(e);
+        }
+        for (Object o : body.getJSONObject("illust").getJSONArray("data")) {
+            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
+            e.setSearch(keyword);
+            e.setFrom(From.Search);
+            artworks.add(e);
+        }
+
+        return artworks;
+    }
+
+    public List<PixivArtwork> searchMangaArtworks(String keyword, Mode mode, int page) throws IOException {
+        HashMap<String, String> cookie = parseCookie(cookieString);
+        String url = String.format(SEARCH_MANGA, keyword, keyword, mode.argStr, page).concat("&lang=").concat(getPixivLanguageTag());
+        Connection c = Jsoup.connect(url).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
+
+        if (proxy != null) c.proxy(proxy);
+
+        String s = c.get().body().ownText();
+        JSONObject body = JSONObject.parseObject(s).getJSONObject("body");
+
+        JSONObject popular = body.getJSONObject("popular");
+
+        LinkedList<PixivArtwork> artworks = new LinkedList<>();
+        for (Object o : popular.getJSONArray("recent")) {
+            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
+            e.setSearch(keyword);
+            e.setFrom(From.Search);
+            artworks.add(e);
+        }
+        for (Object o : popular.getJSONArray("permanent")) {
+            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
+            e.setSearch(keyword);
+            e.setFrom(From.Search);
+            artworks.add(e);
+        }
+        for (Object o : body.getJSONObject("manga").getJSONArray("data")) {
+            PixivArtwork e = JSONObject.parseObject(o.toString(), PixivArtwork.class);
+            e.setSearch(keyword);
+            e.setFrom(From.Search);
+            artworks.add(e);
+        }
+
+        return artworks;
+    }
+
+    public GifData getGifData(PixivArtwork artwork) throws IOException {
+        HashMap<String, String> cookie = parseCookie(cookieString);
+        Connection c = Jsoup.connect(String.format(GIF_DATA, artwork.getId()).concat("?lang=").concat(getPixivLanguageTag())).ignoreContentType(true).cookies(cookie).method(Connection.Method.GET).timeout(10 * 1000);
+        if (proxy != null) c.proxy(proxy);
+        JSONObject body = JSONObject.parseObject(c.get().body().ownText()).getJSONObject("body");
+        GifData gifData = body.to(GifData.class);
+        artwork.setGifData(gifData);
+        return gifData;
+    }
+
+    public void getFullPages(PixivArtwork artwork) throws IOException {
+        HashMap<String, String> cookie = parseCookie(cookieString);
+        Connection c = Jsoup.connect(String.format(PAGES, artwork.getId()).concat("?lang=").concat(getPixivLanguageTag())).ignoreContentType(true).cookies(cookie).method(Connection.Method.GET).timeout(10 * 1000);
+        if (proxy != null) c.proxy(proxy);
+        JSONArray body = JSONObject.parseObject(c.get().body().ownText()).getJSONArray("body");
+        artwork.setImageUrls(new LinkedList<>());
+        for (int i = 0; i < body.size(); i++) {
+            artwork.getImageUrls().add(body.getJSONObject(i).getJSONObject("urls").getString("original"));
+        }
+    }
+
+    public PixivArtwork getArtwork(String id) throws IOException {
+        HashMap<String, String> cookie = parseCookie(cookieString);
+        Connection c = Jsoup.connect(getArtworkPageUrl(id)).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
+        if (proxy != null) c.proxy(proxy);
+
+        final JSONObject content = JSONObject.parseObject(Objects.requireNonNull(c.get().head().getElementById("meta-preload-data")).attr("content"));
+
+        JSONObject illustJsonObj = content.getJSONObject("illust").getJSONObject(id);
+
+        PixivArtwork pixivArtwork = illustJsonObj.to(PixivArtwork.class);
+
+        pixivArtwork.setOrigJson(illustJsonObj);
+
+        JSONArray jsonArray = illustJsonObj.getJSONObject("tags").getJSONArray("tags");
+        LinkedHashSet<String> tags = new LinkedHashSet<>();
+        for (int i = 0; i < jsonArray.size(); i++) {
+            tags.add(jsonArray.getJSONObject(i).getString("tag"));
+        }
+        pixivArtwork.setTranslatedTags(tags);
+
+        final JSONObject userJsonObj = content.getJSONObject("user").getJSONObject(pixivArtwork.getUserId());
+        pixivArtwork.setAuthor(userJsonObj.to(PixivUser.class));
+
+        return pixivArtwork;
+    }
+
+    public void getFullData(PixivArtwork artwork) throws IOException {
+        HashMap<String, String> cookie = parseCookie(cookieString);
+        Connection c = Jsoup.connect(getArtworkPageUrl(artwork.getId())).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
+        if (proxy != null) c.proxy(proxy);
+
+        final JSONObject content = JSONObject.parseObject(Objects.requireNonNull(c.get().head().getElementById("meta-preload-data")).attr("content"));
+        JSONObject jsonObject = content.getJSONObject("illust").getJSONObject(artwork.getId());
+
+        artwork.setBookmarkCount(jsonObject.getInteger("bookmarkCount"));
+        artwork.setLikeCount(jsonObject.getInteger("likeCount"));
+
+        final JSONObject userJsonObj = content.getJSONObject("user").getJSONObject(artwork.getUserId());
+        artwork.setAuthor(userJsonObj.to(PixivUser.class));
+    }
+
+    public List<PixivArtwork> getDiscovery(Mode mode, int limit) throws IOException {
+        HashMap<String, String> cookie = parseCookie(cookieString);
+        Connection c = Jsoup.connect(String.format(DISCOVERY, mode.argStr, limit).concat("&lang=").concat(getPixivLanguageTag())).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
+
+        if (proxy != null) c.proxy(proxy);
+
+        return parseArtworks(c.get().body().ownText());
+    }
+
+    public Set<String> fetchUser(String uid) throws IOException {
+        Connection c = Jsoup.connect(String.format(USER, uid).concat("lang=").concat(getPixivLanguageTag())).ignoreContentType(true).method(Connection.Method.GET).timeout(10 * 1000);
+        if (proxy != null) c.proxy(proxy);
+
+        JSONObject jsonObject = JSONObject.parseObject(c.get().body().ownText()).getJSONObject("body").getJSONObject("illusts");
+
+        return new HashSet<>(jsonObject.keySet());
+    }
+
+    public HashMap<String, String> getUserTagTranslations(String queryString) throws IOException {
+        HashMap<String, String> tagTranslation = new HashMap<>();
+        Connection c = Jsoup.connect(String.format(USER_TAGS, queryString)).ignoreContentType(true).method(Connection.Method.GET).timeout(10 * 1000);
+        if (proxy != null) c.proxy(proxy);
+
+
+        String s = c.get().body().ownText();
+        for (Object o : JSONObject.parseObject(s).getJSONArray("body")) {
+            if (o instanceof JSONObject obj) {
+                tagTranslation.put(obj.getString("tag"), obj.getString("tag_translation"));
+            }
+        }
+
+        return tagTranslation;
+    }
+
+    public List<PixivArtwork> getUserArtworks(String queryString, String uid) throws IOException {
+        LinkedList<PixivArtwork> artworks = new LinkedList<>();
+        Connection c = Jsoup.connect(String.format(USER_WORKS, uid, queryString)).ignoreContentType(true).method(Connection.Method.GET).timeout(10 * 1000);
+
+        if (proxy != null) c.proxy(proxy);
+
+        JSONObject obj = JSONObject.parseObject(c.get().body().ownText()).getJSONObject("body").getJSONObject("works");
+
+        HashMap<String, String> userTagTranslations = getUserTagTranslations(queryString);
+        LinkedHashSet<String> translatedTags = new LinkedHashSet<>();
+        for (String k : obj.keySet()) {
+            JSONObject jsonObject = obj.getJSONObject(k);
+            PixivArtwork a = jsonObject.to(PixivArtwork.class);
+            for (Object originalTag : a.getOriginalTags()) {
+                String s = Objects.requireNonNullElse(userTagTranslations.get(originalTag.toString()), originalTag.toString());
+                translatedTags.add(s);
+            }
+            a.setTranslatedTags(translatedTags);
+            a.setFrom(From.User);
+            a.setOrigJson(jsonObject);
+            artworks.add(a);
+        }
+
+        return artworks;
+    }
+
+    public List<PixivArtwork> fetchMenu() throws IOException {
+        HashMap<String, String> cookie = parseCookie(cookieString);
+        Connection c = Jsoup.connect(TOP.concat("&lang=").concat(getPixivLanguageTag())).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
+        if (proxy != null) c.proxy(proxy);
+
+        return parseArtworks(c.get().body().ownText(), true);
+    }
+
+    public List<PixivArtwork> getRelated(PixivArtwork artwork, int limit) throws IOException {
+        HashMap<String, String> cookie = parseCookie(cookieString);
+        Connection c = Jsoup.connect(String.format(RELATED, artwork.getId(), limit)).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
+        if (proxy != null) c.proxy(proxy);
+
+        String jsonString = c.get().body().ownText();
+
+        LinkedList<PixivArtwork> artworks = new LinkedList<>();
+
+        JSONArray illusts = JSONObject.parse(jsonString).getJSONObject("body").getJSONArray("illusts");
+
+        for (int i = 0; i < illusts.size(); i++) {
+            JSONObject jsonObject = illusts.getJSONObject(i);
+            PixivArtwork object = jsonObject.to(PixivArtwork.class);
+            if (object.getTitle() == null) continue;
+            object.setOrigJson(jsonObject);
+            object.setFrom(From.Related);
+            artworks.add(object);
+        }
+
+        return artworks;
     }
 
     @AllArgsConstructor
