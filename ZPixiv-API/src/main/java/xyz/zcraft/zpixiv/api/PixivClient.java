@@ -107,49 +107,6 @@ public class PixivClient {
         return list;
     }
 
-    public static LinkedList<PixivArtwork> parseArtworks(String jsonString, boolean classify) {
-        LinkedList<PixivArtwork> artworks = new LinkedList<>();
-        JSONObject bodyObject = JSONObject.parse(jsonString).getJSONObject("body");
-        JSONObject tran = bodyObject.getJSONObject("tagTranslation");
-        JSONArray illust = bodyObject.getJSONObject("thumbnails").getJSONArray("illust");
-
-        for (int i = 0; i < illust.size(); i++) {
-            JSONObject jsonObject = illust.getJSONObject(i);
-            PixivArtwork a = jsonObject.to(PixivArtwork.class);
-            a.setTranslatedTags(new LinkedHashSet<>());
-            for (Object t : a.getOriginalTags()) {
-                a.getTranslatedTags().add(translateTag(t.toString(), tran));
-            }
-            a.setOrigJson(jsonObject);
-            artworks.add(a);
-        }
-
-        if (classify) classifyArtwork(artworks, bodyObject.getJSONObject("page"));
-
-        return artworks;
-    }
-
-    public static LinkedList<PixivArtwork> parseArtworks(String jsonString) {
-        LinkedList<PixivArtwork> artworks = new LinkedList<>();
-        JSONObject bodyObject = JSONObject.parse(jsonString).getJSONObject("body");
-        JSONObject tran = bodyObject.getJSONObject("tagTranslation");
-        JSONArray illust = bodyObject.getJSONObject("thumbnails").getJSONArray("illust");
-
-        for (int i = 0; i < illust.size(); i++) {
-            JSONObject jsonObject = illust.getJSONObject(i);
-            PixivArtwork a = jsonObject.to(PixivArtwork.class);
-            a.setOrigJson(jsonObject);
-            a.setFrom(From.Discovery);
-            a.setTranslatedTags(new LinkedHashSet<>());
-            for (Object t : a.getOriginalTags()) {
-                a.getTranslatedTags().add(translateTag(t.toString(), tran));
-            }
-            artworks.add(a);
-        }
-
-        return artworks;
-    }
-
     public static String translateTag(String tag, JSONObject tran) {
         String origLang = Locale.getDefault().toLanguageTag().toLowerCase();
         JSONObject tagObj = tran.getJSONObject(tag);
@@ -429,7 +386,26 @@ public class PixivClient {
 
         if (proxy != null) c.proxy(proxy);
 
-        return parseArtworks(c.get().body().ownText());
+        final String jsonString = c.get().body().ownText();
+
+        LinkedList<PixivArtwork> artworks = new LinkedList<>();
+        JSONObject bodyObject = JSONObject.parse(jsonString).getJSONObject("body");
+        JSONObject tran = bodyObject.getJSONObject("tagTranslation");
+        JSONArray illust = bodyObject.getJSONObject("thumbnails").getJSONArray("illust");
+
+        for (int i = 0; i < illust.size(); i++) {
+            JSONObject jsonObject = illust.getJSONObject(i);
+            PixivArtwork a = jsonObject.to(PixivArtwork.class);
+            a.setOrigJson(jsonObject);
+            a.setFrom(From.Discovery);
+            a.setTranslatedTags(new LinkedHashSet<>());
+            for (Object t : a.getOriginalTags()) {
+                a.getTranslatedTags().add(translateTag(t.toString(), tran));
+            }
+            artworks.add(a);
+        }
+
+        return artworks;
     }
 
     public Set<String> fetchUser(String uid) throws IOException {
@@ -488,7 +464,27 @@ public class PixivClient {
         Connection c = Jsoup.connect(TOP.concat("&lang=").concat(getPixivLanguageTag())).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
         if (proxy != null) c.proxy(proxy);
 
-        return parseArtworks(c.get().body().ownText(), true);
+        final String jsonString = c.get().body().ownText();
+
+        LinkedList<PixivArtwork> artworks = new LinkedList<>();
+        JSONObject bodyObject = JSONObject.parse(jsonString).getJSONObject("body");
+        JSONObject tran = bodyObject.getJSONObject("tagTranslation");
+        JSONArray illust = bodyObject.getJSONObject("thumbnails").getJSONArray("illust");
+
+        for (int i = 0; i < illust.size(); i++) {
+            JSONObject jsonObject = illust.getJSONObject(i);
+            PixivArtwork a = jsonObject.to(PixivArtwork.class);
+            a.setTranslatedTags(new LinkedHashSet<>());
+            for (Object t : a.getOriginalTags()) {
+                a.getTranslatedTags().add(translateTag(t.toString(), tran));
+            }
+            a.setOrigJson(jsonObject);
+            artworks.add(a);
+        }
+
+        classifyArtwork(artworks, bodyObject.getJSONObject("page"));
+
+        return artworks;
     }
 
     public List<PixivArtwork> getRelated(PixivArtwork artwork, int limit) throws IOException {

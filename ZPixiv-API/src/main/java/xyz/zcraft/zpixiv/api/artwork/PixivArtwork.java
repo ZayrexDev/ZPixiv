@@ -73,7 +73,6 @@ public class PixivArtwork {
     private PixivClient.From from;
 
     private JSONObject origJson;
-    private String ranking;
     private String search;
 
     private PixivUser author;
