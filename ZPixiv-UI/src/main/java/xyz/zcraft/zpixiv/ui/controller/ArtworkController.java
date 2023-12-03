@@ -17,6 +17,7 @@ import javafx.scene.web.WebView;
 import javafx.util.Duration;
 import xyz.zcraft.zpixiv.api.PixivClient;
 import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
+import xyz.zcraft.zpixiv.ui.util.Refreshable;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -27,7 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ResourceBundle;
 
-public class ArtworkController implements Initializable {
+public class ArtworkController implements Initializable, Refreshable {
     public ImageView imgView;
     public Button nextPageBtn;
     public Button prevPageBtn;
@@ -250,5 +251,17 @@ public class ArtworkController implements Initializable {
         });
         authorImgThread.setDaemon(true);
         return authorImgThread;
+    }
+
+    @Override
+    public void refresh() {
+        Thread authorImgThread = getAuthorImgThread(artwork);
+        authorImgThread.start();
+
+        Thread imageLoadThread = getImageLoadThread(client, artwork);
+        imageLoadThread.start();
+
+        Thread previewLoadThread = getPreviewLoadThread(client, artwork);
+        previewLoadThread.start();
     }
 }

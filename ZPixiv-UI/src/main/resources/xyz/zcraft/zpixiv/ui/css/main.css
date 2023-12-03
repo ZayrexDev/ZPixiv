@@ -1,7 +1,12 @@
 * {
-    -fx-background-color: #121212;
+    /*-fx-background-color: #1e1f22;*/
+    /*-fx-text-fill: #FFFFFF;*/
+    /*-fx-border-color: #1e1f22;*/
+}
+
+.progress-indicator {
+    -fx-background-color: #1e1f22;
     -fx-text-fill: #FFFFFF;
-    -fx-border-color: #121212;
 }
 
 .button {
@@ -15,4 +20,27 @@
     -fx-border-color: #cecece;
     -fx-border-width: 1;
     -fx-border-radius: 5;
+}
+
+#side-bar,
+#side-bar *,
+#top-bar,
+#top-bar * {
+    -fx-background-color: #2b2d30;
+    -fx-border-color: #2b2d30;
+}
+
+#search-bar {
+    -fx-border-color: #121212;
+}
+
+#side-bar,
+#top-bar {
+    -fx-border-color: #1e1f22;
+}
+
+.pane {
+    -fx-background-color: #1e1f22;
+    -fx-text-fill: #FFFFFF;
+    -fx-border-color: #1e1f22;
 }

@@ -6,6 +6,7 @@ module ZPixiv.UI {
     requires ZPixiv.API;
     requires javafx.web;
     requires com.alibaba.fastjson2;
+    requires lombok;
 
     exports xyz.zcraft.zpixiv.ui;
     exports xyz.zcraft.zpixiv.ui.controller;

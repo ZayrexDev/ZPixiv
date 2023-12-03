@@ -44,6 +44,32 @@ public class PixivClient {
         }
     }
 
+    public PixivClient(String cookieString, Proxy proxy, boolean getUserData) throws IOException {
+        cookie = parseCookie(cookieString);
+        this.proxy = proxy;
+        if (getUserData) {
+            Connection c = Jsoup.connect("https://www.pixiv.net").ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
+            setConnectionProxy(c);
+            String text = Objects.requireNonNull(c.get().getElementById("meta-global-data")).attr("content");
+            final JSONObject jsonObject = JSONObject.parseObject(text);
+            JSONObject userDataJson = jsonObject.getJSONObject("userData");
+
+            if (userDataJson == null) userData = null;
+            else {
+                PixivUser userData = userDataJson.to(PixivUser.class);
+                userData.setToken(jsonObject.getString("token"));
+                if (userData.getName() != null && userData.getId() != null) {
+                    this.userData = userData;
+                } else {
+                    throw new RuntimeException("Can't login");
+                }
+            }
+        } else {
+            userData = null;
+        }
+    }
+
+
     public PixivClient(String cookieString) throws IOException {
         cookie = parseCookie(cookieString);
         Connection c = Jsoup.connect("https://www.pixiv.net").ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
