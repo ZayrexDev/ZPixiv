@@ -67,6 +67,7 @@ public class PixivArtwork {
     @JSONField(name = "likeCount")
     private int likeCount;
 
+    private boolean errorOccurred = false;
     private Set<String> translatedTags;
     private List<String> imageUrls;
     private GifData gifData;

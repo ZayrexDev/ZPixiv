@@ -5,6 +5,8 @@ module ZPixiv.UI {
     requires org.apache.logging.log4j.core;
     requires ZPixiv.API;
     requires javafx.web;
+    requires ZPixiv;
+    requires com.alibaba.fastjson2;
 
     exports xyz.zcraft.zpixiv.ui;
     exports xyz.zcraft.zpixiv.ui.controller;
