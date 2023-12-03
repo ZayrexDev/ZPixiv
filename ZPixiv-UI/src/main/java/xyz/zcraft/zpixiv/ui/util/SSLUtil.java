@@ -1,6 +1,8 @@
 package xyz.zcraft.zpixiv.ui.util;
 
 import javax.net.ssl.*;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 public class SSLUtil {
@@ -17,7 +19,34 @@ public class SSLUtil {
         HostnameVerifier hv = (urlHostName, session) -> true;
         trustAllHttpsCertificates();
         HttpsURLConnection.setDefaultHostnameVerifier(hv);
+        trustEveryone();
     }
+
+    private static void trustEveryone() {
+        try {
+            HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
+
+            SSLContext context = SSLContext.getInstance("TLS");
+            context.init(null, new X509TrustManager[] { new X509TrustManager() {
+                @Override
+                public void checkClientTrusted(X509Certificate[] chain, String authType) {
+                }
+
+                @Override
+                public void checkServerTrusted(X509Certificate[] chain, String authType) {
+                }
+
+                @Override
+                public X509Certificate[] getAcceptedIssuers() {
+                    return new X509Certificate[0];
+                }
+            } }, new SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     static class miTM implements X509TrustManager {
         public X509Certificate[] getAcceptedIssuers() {

@@ -15,7 +15,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import javafx.util.Duration;
-import xyz.zcraft.zpixiv.Config;
 import xyz.zcraft.zpixiv.api.PixivClient;
 import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
 
@@ -51,7 +50,6 @@ public class ArtworkController implements Initializable {
     public AnchorPane imgAnchor;
     public ImageView blurImgView;
     public AnchorPane loadPane;
-
     public void nextPageBtnOnAction(ActionEvent actionEvent) {
     }
 
@@ -59,6 +57,7 @@ public class ArtworkController implements Initializable {
     }
 
     public void followBtnOnAction(ActionEvent actionEvent) {
+
     }
 
     public void praiseBtnOnAction(ActionEvent actionEvent) {
@@ -129,6 +128,7 @@ public class ArtworkController implements Initializable {
     private Thread getPreviewLoadThread(PixivClient client, PixivArtwork artwork) {
         Thread previewLoadThread = new Thread(() -> {
             try {
+                Platform.runLater(() -> loadPane.setVisible(true));
                 client.getFullPages(artwork);
 
                 if (!artwork.isErrorOccurred()) {
@@ -136,8 +136,8 @@ public class ArtworkController implements Initializable {
                     URL url = new URL(artwork.getUrls().getString("small"));
                     URLConnection c;
 
-                    if (Config.getGlobalConfig().proxy != null)
-                        c = url.openConnection(Config.getGlobalConfig().proxy);
+                    if (client.getProxy() != null)
+                        c = url.openConnection(client.getProxy());
                     else c = url.openConnection();
 
                     c.setRequestProperty("Referer", "https://www.pixiv.net");
@@ -156,7 +156,10 @@ public class ArtworkController implements Initializable {
                     b.close();
 
                     image = new Image(tempFile.toFile().toURI().toURL().toString(), true);
-                    Platform.runLater(() -> blurImgView.setImage(image));
+                    Platform.runLater(() -> {
+                        imgView.setImage(image);
+                        blurImgView.setImage(image);
+                    });
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -176,8 +179,8 @@ public class ArtworkController implements Initializable {
                     URL url = new URL(artwork.getImageUrls().get(0));
                     URLConnection c;
 
-                    if (Config.getGlobalConfig().proxy != null)
-                        c = url.openConnection(Config.getGlobalConfig().proxy);
+                    if (client.getProxy() != null)
+                        c = url.openConnection(client.getProxy());
                     else c = url.openConnection();
 
                     c.setRequestProperty("Referer", "https://www.pixiv.net");
@@ -230,11 +233,10 @@ public class ArtworkController implements Initializable {
                 InputStream is;
                 URL url = new URL(profileImg);
                 URLConnection c;
-                if (Config.getGlobalConfig().proxy != null) {
-                    c = url.openConnection(Config.getGlobalConfig().proxy);
-                } else {
-                    c = url.openConnection();
-                }
+
+                if (client.getProxy() != null)
+                    c = url.openConnection(client.getProxy());
+                else c = url.openConnection();
 
                 c.setRequestProperty("Referer", "https://www.pixiv.net");
 

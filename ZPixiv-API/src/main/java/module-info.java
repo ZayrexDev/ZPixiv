@@ -3,7 +3,7 @@ module ZPixiv.API {
     requires com.alibaba.fastjson2;
     requires org.apache.logging.log4j;
     requires org.jsoup;
-    requires ZPixiv;
+
     exports xyz.zcraft.zpixiv.api.artwork;
     exports xyz.zcraft.zpixiv.api.user;
     exports xyz.zcraft.zpixiv.api;

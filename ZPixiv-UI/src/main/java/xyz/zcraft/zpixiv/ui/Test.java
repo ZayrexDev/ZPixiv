@@ -17,6 +17,7 @@ import java.net.URL;
 public class Test extends Application {
     private static final String COOKIE = "";
     private static final String ID = "";
+    private static final Proxy PROXY = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(0));
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -28,7 +29,7 @@ public class Test extends Application {
 
         final ArtworkController controller = loader.getController();
 
-        PixivClient client = new PixivClient();
+        PixivClient client = new PixivClient(COOKIE, PROXY);
 
         controller.load(client, client.getArtwork(ID));
 

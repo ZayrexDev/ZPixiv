@@ -3,26 +3,31 @@ package xyz.zcraft.zpixiv.api;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
-import xyz.zcraft.zpixiv.Config;
 import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
 import xyz.zcraft.zpixiv.api.user.PixivUser;
 
 import java.io.IOException;
+import java.net.Proxy;
 import java.util.*;
 
 public class PixivClient {
     private final PixivUser userData;
     private static final Logger LOG = LogManager.getLogger(PixivClient.class);
     private final HashMap<String, String> cookie;
+    @Getter @Setter
+    private Proxy proxy;
 
-    public PixivClient(String cookieString) throws IOException {
+    public PixivClient(String cookieString, Proxy proxy) throws IOException {
         cookie = parseCookie(cookieString);
+        this.proxy = proxy;
         Connection c = Jsoup.connect("https://www.pixiv.net").ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-        setProxy(c);
+        setConnectionProxy(c);
         String text = Objects.requireNonNull(c.get().getElementById("meta-global-data")).attr("content");
         final JSONObject jsonObject = JSONObject.parseObject(text);
         JSONObject userDataJson = jsonObject.getJSONObject("userData");
@@ -39,8 +44,32 @@ public class PixivClient {
         }
     }
 
-    private static void setProxy(Connection c) {
-        if (Config.getGlobalConfig().proxy != null) c.proxy(Config.getGlobalConfig().proxy);
+    public PixivClient(String cookieString) throws IOException {
+        cookie = parseCookie(cookieString);
+        Connection c = Jsoup.connect("https://www.pixiv.net").ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
+        setConnectionProxy(c);
+        String text = Objects.requireNonNull(c.get().getElementById("meta-global-data")).attr("content");
+        final JSONObject jsonObject = JSONObject.parseObject(text);
+        JSONObject userDataJson = jsonObject.getJSONObject("userData");
+
+        if(userDataJson == null) userData = null;
+        else {
+            PixivUser userData = userDataJson.to(PixivUser.class);
+            userData.setToken(jsonObject.getString("token"));
+            if (userData.getName() != null && userData.getId() != null) {
+                this.userData = userData;
+            } else {
+                throw new RuntimeException("Can't login");
+            }
+        }
+    }
+    public PixivClient(Proxy proxy) throws IOException {
+        this();
+        this.proxy = proxy;
+    }
+
+    private void setConnectionProxy(Connection c) {
+        if (proxy != null) c.proxy(proxy);
     }
 
     public PixivClient() {
@@ -83,7 +112,7 @@ public class PixivClient {
     public void getFullPages(PixivArtwork artwork) {
         try {
             Connection c = Jsoup.connect(String.format(Urls.PAGES, artwork.getId()).concat("?lang=").concat(getPixivLanguageTag())).ignoreContentType(true).cookies(cookie).method(Connection.Method.GET).timeout(10 * 1000);
-            setProxy(c);
+            setConnectionProxy(c);
             JSONArray body = JSONObject.parseObject(c.get().body().ownText()).getJSONArray("body");
             artwork.setImageUrls(new LinkedList<>());
             for (int i = 0; i < body.size(); i++) {
@@ -97,7 +126,7 @@ public class PixivClient {
 
     public PixivArtwork getArtwork(String id) throws IOException {
         Connection c = Jsoup.connect(getArtworkPageUrl(id)).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-        setProxy(c);
+        setConnectionProxy(c);
 
         final JSONObject content = JSONObject.parseObject(Objects.requireNonNull(c.get().head().getElementById("meta-preload-data")).attr("content"));
 
