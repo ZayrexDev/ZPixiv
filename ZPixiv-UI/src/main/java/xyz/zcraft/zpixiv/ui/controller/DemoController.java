@@ -22,12 +22,15 @@ public class DemoController {
         try {
             SSLUtil.ignoreSsl();
 
-            PixivClient client = new PixivClient(
-                    cookieField.getText(),
-                    new Proxy(Proxy.Type.HTTP,
-                            new InetSocketAddress(proxyHostField.getText(), Integer.parseInt(proxyPortField.getText()))),
-                    false
-            );
+            Proxy proxy;
+
+            if (proxyHostField.getText() == null || proxyPortField.getText() == null || proxyHostField.getText().isBlank()) {
+                proxy = null;
+            } else {
+                proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHostField.getText(), Integer.parseInt(proxyPortField.getText())));
+            }
+
+            PixivClient client = new PixivClient(cookieField.getText(), proxy, false);
 
             final URL url = ResourceLoader.load("fxml/Artwork.fxml");
             final FXMLLoader loader = new FXMLLoader(url);

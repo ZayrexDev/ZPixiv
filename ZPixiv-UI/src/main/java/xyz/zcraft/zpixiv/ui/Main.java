@@ -25,6 +25,7 @@ public class Main extends Application {
     public void start(Stage stage) {
         Main.stage = stage;
         try {
+            LOG.info("Loading frame");
             FXMLLoader loader = new FXMLLoader(ResourceLoader.load("fxml/Main.fxml"));
             final Parent main = loader.load();
             mainController = loader.getController();
@@ -34,7 +35,8 @@ public class Main extends Application {
             stage.initStyle(StageStyle.UNDECORATED);
             stage.show();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            LOG.error("Exception in window initialize", e);
+//            throw new RuntimeException(e);
         }
     }
 }

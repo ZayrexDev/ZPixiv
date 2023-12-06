@@ -9,7 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.zcraft.zpixiv.ui.util.Refreshable;
@@ -27,9 +27,10 @@ public class MainController implements Initializable {
     private final Stack<Object> controllers = new Stack<>();
     public TextField topSearchBar;
     public AnchorPane contentPane;
-    public HBox main;
+    public AnchorPane main;
     public Button closePageBtn;
     public Button refreshBtn;
+    public VBox msgPane;
     private LoginController loginController;
 
     public void profileBtnOnAction(KeyEvent keyEvent) {

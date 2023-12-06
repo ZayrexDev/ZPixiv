@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
@@ -15,6 +16,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import javafx.util.Duration;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import xyz.zcraft.zpixiv.api.PixivClient;
 import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
 import xyz.zcraft.zpixiv.ui.util.Refreshable;
@@ -29,6 +32,7 @@ import java.nio.file.Path;
 import java.util.ResourceBundle;
 
 public class ArtworkController implements Initializable, Refreshable {
+    private static final Logger LOG = LogManager.getLogger(ArtworkController.class);
     public ImageView imgView;
     public Button nextPageBtn;
     public Button prevPageBtn;
@@ -51,6 +55,7 @@ public class ArtworkController implements Initializable, Refreshable {
     public AnchorPane imgAnchor;
     public ImageView blurImgView;
     public AnchorPane loadPane;
+
     public void nextPageBtnOnAction(ActionEvent actionEvent) {
     }
 
@@ -86,6 +91,7 @@ public class ArtworkController implements Initializable, Refreshable {
     private PixivArtwork artwork;
 
     public void load(PixivClient client, PixivArtwork artwork) {
+        LOG.info("Loading artwork {}", artwork.getId());
         this.client = client;
         this.artwork = artwork;
 
@@ -158,16 +164,31 @@ public class ArtworkController implements Initializable, Refreshable {
 
                     image = new Image(tempFile.toFile().toURI().toURL().toString(), true);
                     Platform.runLater(() -> {
+                        if (imgView.getImage() != null) return;
                         imgView.setImage(image);
                         blurImgView.setImage(image);
                     });
+                    LOG.info("Preview image loaded");
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                LOG.error("Exception in loading preview image", e);
+
+                if (imgView.getImage() == null) return;
+                getFadeTransition(loadPane).play();
             }
         });
         previewLoadThread.setDaemon(true);
         return previewLoadThread;
+    }
+
+    private static FadeTransition getFadeTransition(Node node) {
+        FadeTransition f = new FadeTransition();
+        f.setNode(node);
+        f.setDuration(Duration.millis(300));
+        f.setOnFinished((u) -> node.setVisible(false));
+        f.setFromValue(1.0);
+        f.setToValue(0.0);
+        return f;
     }
 
     private Thread getImageLoadThread(PixivClient client, PixivArtwork artwork) {
@@ -207,19 +228,15 @@ public class ArtworkController implements Initializable, Refreshable {
 
                     image = new Image(tempFile.toFile().toURI().toURL().toString(), true);
 
-                    FadeTransition f = new FadeTransition();
-                    f.setNode(loadPane);
-                    f.setDuration(Duration.millis(500));
-                    f.setOnFinished((u) -> loadPane.setVisible(false));
-                    f.setFromValue(1.0);
-                    f.setToValue(0.0);
+                    FadeTransition f = getFadeTransition(loadPane);
                     Platform.runLater(() -> {
                         imgView.setImage(image);
                         f.play();
                     });
+                    LOG.info("Image loaded");
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                LOG.error("Exception in loading image", e);
             }
         });
         imageLoadThread.setDaemon(true);
@@ -245,8 +262,9 @@ public class ArtworkController implements Initializable, Refreshable {
 
                 image = new Image(is);
                 Platform.runLater(() -> authorImg.setImage(image));
+                LOG.info("Author image loaded");
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                LOG.error("Exception in author image", e);
             }
         });
         authorImgThread.setDaemon(true);
@@ -255,6 +273,7 @@ public class ArtworkController implements Initializable, Refreshable {
 
     @Override
     public void refresh() {
+        LOG.info("Reloading artwork {}", artwork.getId());
         Thread authorImgThread = getAuthorImgThread(artwork);
         authorImgThread.start();
 
