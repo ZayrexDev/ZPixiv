@@ -8,11 +8,12 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.web.WebView?>
 
-<VBox fx:id="root" prefHeight="458.0" prefWidth="576.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.ArtworkController">
+<VBox fx:id="root" prefHeight="458.0" prefWidth="576.0" style="-fx-background-color: white;" stylesheets="@../css/artwork.css" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.ArtworkController">
    <children>
       <VBox>
          <children>
@@ -66,20 +67,23 @@
                         </HBox>
                         <VBox alignment="BOTTOM_CENTER" maxHeight="1.7976931348623157E308" spacing="10.0" VBox.vgrow="ALWAYS">
                            <children>
-                              <HBox maxHeight="1.7976931348623157E308" prefWidth="0.0" spacing="10.0">
+                              <HBox alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" prefWidth="0.0" spacing="10.0">
                                  <children>
-                                    <Label fx:id="likeLbl" text="likes" />
-                                    <Label fx:id="bookmarkLbl" text="bookmarks" />
-                                    <Label fx:id="viewLbl" text="views" />
+                                    <Region fx:id="likeIcon" maxHeight="12.0" maxWidth="12.0" minHeight="12.0" minWidth="12.0" prefHeight="12.0" prefWidth="12.0" />
+                                    <Label fx:id="likeLbl" text="000" />
+                                    <Region fx:id="bmIcon" maxHeight="12.0" maxWidth="12.0" minHeight="12.0" minWidth="12.0" prefHeight="12.0" prefWidth="12.0" />
+                                    <Label fx:id="bookmarkLbl" text="000" />
+                                    <Region fx:id="viewIcon" maxHeight="12.0" maxWidth="12.0" minHeight="12.0" minWidth="12.0" prefHeight="12.0" prefWidth="12.0" />
+                                    <Label fx:id="viewLbl" text="000" />
                                  </children>
                               </HBox>
                               <HBox prefHeight="0.0" prefWidth="0.0" spacing="10.0">
                                  <children>
-                                    <Button fx:id="praiseBtn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#praiseBtnOnAction" text="Praise" HBox.hgrow="ALWAYS" />
-                                    <HBox maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                                    <HBox maxWidth="1.7976931348623157E308" spacing="20.0" HBox.hgrow="ALWAYS">
                                        <children>
-                                          <Button fx:id="likeBtn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#likeBtnOnAction" text="Like" HBox.hgrow="ALWAYS" />
-                                          <Button fx:id="hidLikeBtn" mnemonicParsing="false" onAction="#hidLikeBtnOnAction" text="Hid" />
+                                          <Region fx:id="likeBtn" maxHeight="390.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" prefHeight="390.0" prefWidth="246.0" styleClass="regBtn" />
+                                          <Region fx:id="bookmarkBtn" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" prefHeight="25.0" prefWidth="25.0" styleClass="regBtn" />
+                                          <Region fx:id="hidbkBtn" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" prefHeight="25.0" prefWidth="25.0" styleClass="regBtn" />
                                        </children>
                                     </HBox>
                                  </children>

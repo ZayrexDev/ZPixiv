@@ -11,9 +11,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.SVGPath;
 import javafx.scene.web.WebView;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
@@ -44,9 +44,9 @@ public class ArtworkController implements Initializable, Refreshable {
     public Label likeLbl;
     public Label bookmarkLbl;
     public Label viewLbl;
-    public Button praiseBtn;
-    public Button likeBtn;
-    public Button hidLikeBtn;
+    public Region likeBtn;
+    public Region bookmarkBtn;
+    public Region hidbkBtn;
     public Label xResLbl;
     public HBox titleBox;
     public WebView descView;
@@ -55,6 +55,9 @@ public class ArtworkController implements Initializable, Refreshable {
     public AnchorPane imgAnchor;
     public ImageView blurImgView;
     public AnchorPane loadPane;
+    public Region bmIcon;
+    public Region viewIcon;
+    public Region likeIcon;
 
     public void nextPageBtnOnAction(ActionEvent actionEvent) {
     }
@@ -75,6 +78,7 @@ public class ArtworkController implements Initializable, Refreshable {
     public void likeBtnOnAction(ActionEvent actionEvent) {
     }
 
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         root.widthProperty().addListener((a, b, c) -> {
@@ -86,6 +90,7 @@ public class ArtworkController implements Initializable, Refreshable {
             blurImgView.setFitHeight(c.doubleValue() - 200);
         });
     }
+
 
     private PixivClient client;
     private PixivArtwork artwork;
