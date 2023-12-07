@@ -69,11 +69,11 @@
                            <children>
                               <HBox alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" prefWidth="0.0" spacing="10.0">
                                  <children>
-                                    <Region fx:id="likeIcon" maxHeight="12.0" maxWidth="12.0" minHeight="12.0" minWidth="12.0" prefHeight="12.0" prefWidth="12.0" />
+                                    <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" />
                                     <Label fx:id="likeLbl" text="000" />
-                                    <Region fx:id="bmIcon" maxHeight="12.0" maxWidth="12.0" minHeight="12.0" minWidth="12.0" prefHeight="12.0" prefWidth="12.0" />
+                                    <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" />
                                     <Label fx:id="bookmarkLbl" text="000" />
-                                    <Region fx:id="viewIcon" maxHeight="12.0" maxWidth="12.0" minHeight="12.0" minWidth="12.0" prefHeight="12.0" prefWidth="12.0" />
+                                    <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" />
                                     <Label fx:id="viewLbl" text="000" />
                                  </children>
                               </HBox>
