@@ -69,21 +69,20 @@
                            <children>
                               <HBox alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" prefWidth="0.0" spacing="10.0">
                                  <children>
-                                    <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" />
+                                    <Region maxHeight="12.0" maxWidth="15.0" minHeight="12.0" minWidth="15.0" prefHeight="12.0" prefWidth="15.0" styleClass="likeImg,regImg" />
                                     <Label fx:id="likeLbl" text="000" />
-                                    <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" />
+                                    <Region maxHeight="15.0" maxWidth="15.0" minHeight="15.0" minWidth="15.0" prefHeight="15.0" prefWidth="15.0" styleClass="bmImg,regImg" />
                                     <Label fx:id="bookmarkLbl" text="000" />
-                                    <ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" />
+                                    <Region maxHeight="2.0" maxWidth="12.0" minHeight="12.0" minWidth="12.0" prefHeight="12.0" prefWidth="12.0" styleClass="viewImg,regImg" />
                                     <Label fx:id="viewLbl" text="000" />
                                  </children>
                               </HBox>
                               <HBox prefHeight="0.0" prefWidth="0.0" spacing="10.0">
                                  <children>
-                                    <HBox maxWidth="1.7976931348623157E308" spacing="20.0" HBox.hgrow="ALWAYS">
+                                    <HBox alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="20.0" HBox.hgrow="ALWAYS">
                                        <children>
-                                          <Region fx:id="likeBtn" maxHeight="390.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" prefHeight="390.0" prefWidth="246.0" styleClass="regBtn" />
-                                          <Region fx:id="bookmarkBtn" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" prefHeight="25.0" prefWidth="25.0" styleClass="regBtn" />
-                                          <Region fx:id="hidbkBtn" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" prefHeight="25.0" prefWidth="25.0" styleClass="regBtn" />
+                                          <Region fx:id="likeBtn" maxHeight="12.0" maxWidth="15.0" minHeight="12.0" minWidth="15.0" prefHeight="12.0" prefWidth="15.0" styleClass="regBtn,likeImg" />
+                                          <Region fx:id="bookmarkBtn" maxHeight="15.0" maxWidth="16.0" minHeight="15.0" minWidth="16.0" prefHeight="15.0" prefWidth="16.0" styleClass="regBtn,bmImg" />
                                        </children>
                                     </HBox>
                                  </children>
