@@ -78,7 +78,7 @@ public class MainController implements Initializable {
     }
 
     public void closePageBtnOnAction(ActionEvent actionEvent) {
-        if(controllers.isEmpty()) return;
+        if (controllers.isEmpty()) return;
         contentPane.getChildren().remove(contentPane.getChildren().size() - 1);
         controllers.pop();
         checkPaneControlBtn();
@@ -98,5 +98,11 @@ public class MainController implements Initializable {
             refreshBtn.setDisable(true);
             closePageBtn.setDisable(true);
         }
+    }
+
+    public void showAlert(String title, String msg) {
+        final MsgController cont = MsgController.newInstance(title, msg);
+        msgPane.getChildren().add(cont.getRoot());
+        cont.playTimeLine();
     }
 }

@@ -69,20 +69,30 @@
                            <children>
                               <HBox alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" prefWidth="0.0" spacing="10.0">
                                  <children>
-                                    <Region maxHeight="12.0" maxWidth="15.0" minHeight="12.0" minWidth="15.0" prefHeight="12.0" prefWidth="15.0" styleClass="likeImg,regImg" />
-                                    <Label fx:id="likeLbl" text="000" />
-                                    <Region maxHeight="15.0" maxWidth="15.0" minHeight="15.0" minWidth="15.0" prefHeight="15.0" prefWidth="15.0" styleClass="bmImg,regImg" />
-                                    <Label fx:id="bookmarkLbl" text="000" />
-                                    <Region maxHeight="2.0" maxWidth="12.0" minHeight="12.0" minWidth="12.0" prefHeight="12.0" prefWidth="12.0" styleClass="viewImg,regImg" />
-                                    <Label fx:id="viewLbl" text="000" />
+                                    <Region id="likeImg" maxHeight="12.0" maxWidth="15.0" minHeight="12.0" minWidth="15.0" prefHeight="12.0" prefWidth="15.0" />
+                                    <Label fx:id="likeLbl" text="000" textFill="#868686" />
+                                    <Region id="bmImg" maxHeight="15.0" maxWidth="15.0" minHeight="15.0" minWidth="15.0" prefHeight="15.0" prefWidth="15.0" />
+                                    <Label fx:id="bookmarkLbl" text="000" textFill="#868686" />
+                                    <Region id="viewImg" maxHeight="2.0" maxWidth="12.0" minHeight="12.0" minWidth="12.0" prefHeight="12.0" prefWidth="12.0" />
+                                    <Label fx:id="viewLbl" text="000" textFill="#868686" />
                                  </children>
                               </HBox>
                               <HBox prefHeight="0.0" prefWidth="0.0" spacing="10.0">
                                  <children>
-                                    <HBox alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="20.0" HBox.hgrow="ALWAYS">
+                                    <HBox alignment="CENTER_LEFT" fillHeight="false" maxWidth="1.7976931348623157E308" spacing="20.0" HBox.hgrow="ALWAYS">
                                        <children>
-                                          <Region fx:id="likeBtn" maxHeight="12.0" maxWidth="15.0" minHeight="12.0" minWidth="15.0" prefHeight="12.0" prefWidth="15.0" styleClass="regBtn,likeImg" />
-                                          <Region fx:id="bookmarkBtn" maxHeight="15.0" maxWidth="16.0" minHeight="15.0" minWidth="16.0" prefHeight="15.0" prefWidth="16.0" styleClass="regBtn,bmImg" />
+                                          <HBox alignment="CENTER" spacing="10.0">
+                                             <children>
+                                                <Button fx:id="likeBtn" maxHeight="15.0" maxWidth="20.0" minHeight="15.0" minWidth="20.0" mnemonicParsing="false" onAction="#likeBtnOnAction" prefHeight="15.0" prefWidth="20.0" />
+                                                <Label maxHeight="1.7976931348623157E308" prefHeight="15.0" prefWidth="33.0" text="赞！" />
+                                             </children>
+                                          </HBox>
+                                          <HBox>
+                                             <children>
+                                                <Button fx:id="bookmarkBtn" maxHeight="18.0" maxWidth="20.0" minHeight="18.0" minWidth="20.0" mnemonicParsing="false" onAction="#bookmarkBtnOnAction" prefHeight="18.0" prefWidth="20.0" />
+                                                <ProgressIndicator fx:id="bmProgress" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" prefHeight="20.0" prefWidth="20.0" visible="false" />
+                                             </children>
+                                          </HBox>
                                        </children>
                                     </HBox>
                                  </children>

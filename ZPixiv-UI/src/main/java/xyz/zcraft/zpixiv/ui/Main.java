@@ -13,6 +13,8 @@ import xyz.zcraft.zpixiv.ui.controller.MainController;
 import xyz.zcraft.zpixiv.ui.util.ResourceLoader;
 
 import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class Main extends Application {
     private static final Logger LOG = LogManager.getLogger(Main.class);
@@ -20,6 +22,9 @@ public class Main extends Application {
 
     @Getter
     private static MainController mainController = null;
+
+    @Getter
+    private static final ThreadPoolExecutor tpe = (ThreadPoolExecutor) Executors.newCachedThreadPool();
 
     @Override
     public void start(Stage stage) {
@@ -38,5 +43,9 @@ public class Main extends Application {
             LOG.error("Exception in window initialize", e);
 //            throw new RuntimeException(e);
         }
+    }
+
+    public static void showAlert(String title, String content) {
+        mainController.showAlert(title, content);
     }
 }

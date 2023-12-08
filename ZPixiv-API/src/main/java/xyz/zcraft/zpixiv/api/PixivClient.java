@@ -2,6 +2,7 @@ package xyz.zcraft.zpixiv.api;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.alibaba.fastjson2.JSONWriter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
 import xyz.zcraft.zpixiv.api.user.PixivUser;
 
@@ -17,10 +19,11 @@ import java.net.Proxy;
 import java.util.*;
 
 public class PixivClient {
-    private final PixivUser userData;
     private static final Logger LOG = LogManager.getLogger(PixivClient.class);
+    private final PixivUser userData;
     private final HashMap<String, String> cookie;
-    @Getter @Setter
+    @Getter
+    @Setter
     private Proxy proxy;
 
     public PixivClient(String cookieString, Proxy proxy) throws IOException {
@@ -32,7 +35,7 @@ public class PixivClient {
         final JSONObject jsonObject = JSONObject.parseObject(text);
         JSONObject userDataJson = jsonObject.getJSONObject("userData");
 
-        if(userDataJson == null) userData = null;
+        if (userDataJson == null) userData = null;
         else {
             PixivUser userData = userDataJson.to(PixivUser.class);
             userData.setToken(jsonObject.getString("token"));
@@ -78,7 +81,7 @@ public class PixivClient {
         final JSONObject jsonObject = JSONObject.parseObject(text);
         JSONObject userDataJson = jsonObject.getJSONObject("userData");
 
-        if(userDataJson == null) userData = null;
+        if (userDataJson == null) userData = null;
         else {
             PixivUser userData = userDataJson.to(PixivUser.class);
             userData.setToken(jsonObject.getString("token"));
@@ -89,13 +92,10 @@ public class PixivClient {
             }
         }
     }
+
     public PixivClient(Proxy proxy) throws IOException {
         this();
         this.proxy = proxy;
-    }
-
-    private void setConnectionProxy(Connection c) {
-        if (proxy != null) c.proxy(proxy);
     }
 
     public PixivClient() {
@@ -133,6 +133,10 @@ public class PixivClient {
                 return "en";
             }
         }
+    }
+
+    private void setConnectionProxy(Connection c) {
+        if (proxy != null) c.proxy(proxy);
     }
 
     public void getFullPages(PixivArtwork artwork) {
@@ -173,6 +177,24 @@ public class PixivClient {
         pixivArtwork.setAuthor(userJsonObj.to(PixivUser.class));
 
         return pixivArtwork;
+    }
+
+    public boolean addBookmark(PixivArtwork artwork) throws IOException {
+        LOG.info("Adding bm to {}", artwork.getId());
+        final JSONObject obj = new JSONObject();
+        obj.put("illust_id", artwork.getId());
+        obj.put("restrict", 0);
+        obj.put("comment", "");
+        obj.put("tags", new JSONArray());
+
+        Connection c = Jsoup.connect(Urls.ADD_BOOKMARK).ignoreContentType(true).method(Connection.Method.POST).cookies(cookie).timeout(10 * 1000).requestBody(obj.toString());
+        setConnectionProxy(c);
+
+        LOG.info("Ready to post");
+        final JSONObject response = JSONObject.parseObject(c.execute().body());
+        LOG.info("Got response {}", response);
+        LOG.info(response.toString(JSONWriter.Feature.PrettyFormat));
+        return !response.getBoolean("error");
     }
 
 //    public static List<String> buildQueryString(Set<String> ids) {
@@ -577,6 +599,7 @@ public class PixivClient {
 
     public static class Urls {
         static final String TOP = "https://www.pixiv.net/ajax/top/illust?mode=all";
+        static final String ADD_BOOKMARK = "https://www.pixiv.net/ajax/illusts/bookmarks/add";
         static final String RELATED = "https://www.pixiv.net/ajax/illust/%s/recommend/init?limit=%d";
         static final String ARTWORK = "https://www.pixiv.net/artworks/";
         static final String USER = "https://www.pixiv.net/ajax/user/%s/profile/all?";

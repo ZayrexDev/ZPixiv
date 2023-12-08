@@ -70,11 +70,15 @@ public class PixivArtwork {
     private boolean errorOccurred = false;
     private Set<String> translatedTags;
     private List<String> imageUrls;
-    private GifData gifData;
-    private PixivClient.From from;
+//    private GifData gifData;
+//    private PixivClient.From from;
 
     private JSONObject origJson;
-    private String search;
+//    private String search;
 
     private PixivUser author;
+
+    public boolean isBookmarked() {
+        return bookmarkData != null;
+    }
 }
