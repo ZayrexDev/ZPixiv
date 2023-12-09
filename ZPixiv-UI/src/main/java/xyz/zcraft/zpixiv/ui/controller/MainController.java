@@ -55,7 +55,7 @@ public class MainController implements Initializable {
 
     }
 
-    public void exitBtnOnAction(ActionEvent actionEvent) {
+    public void exitBtnOnAction() {
         Platform.exit();
     }
 
@@ -77,14 +77,14 @@ public class MainController implements Initializable {
         checkPaneControlBtn();
     }
 
-    public void closePageBtnOnAction(ActionEvent actionEvent) {
+    public void closePageBtnOnAction() {
         if (controllers.isEmpty()) return;
         contentPane.getChildren().remove(contentPane.getChildren().size() - 1);
         controllers.pop();
         checkPaneControlBtn();
     }
 
-    public void refreshBtnOnAction(ActionEvent actionEvent) {
+    public void refreshBtnOnAction() {
         if (controllers.peek() instanceof Refreshable refreshable) {
             refreshable.refresh();
         }
@@ -102,7 +102,9 @@ public class MainController implements Initializable {
 
     public void showAlert(String title, String msg) {
         final MsgController cont = MsgController.newInstance(title, msg);
-        msgPane.getChildren().add(cont.getRoot());
-        cont.playTimeLine();
+        Platform.runLater(() -> {
+            msgPane.getChildren().add(cont.getRoot());
+            cont.playTimeLine();
+        });
     }
 }

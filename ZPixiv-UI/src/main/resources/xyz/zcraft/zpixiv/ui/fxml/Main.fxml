@@ -83,6 +83,6 @@
             </VBox>
           </children>
       </HBox>
-      <VBox fx:id="msgPane" alignment="BOTTOM_RIGHT" maxHeight="1.7976931348623157E308" spacing="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+      <VBox fx:id="msgPane" alignment="BOTTOM_RIGHT" maxHeight="1.7976931348623157E308" spacing="20.0" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="0.0" />
    </children>
 </AnchorPane>

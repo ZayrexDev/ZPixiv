@@ -2,7 +2,6 @@ package xyz.zcraft.zpixiv.api;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import com.alibaba.fastjson2.JSONWriter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,16 +9,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
 import xyz.zcraft.zpixiv.api.user.PixivUser;
 
 import java.io.IOException;
 import java.net.Proxy;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class PixivClient {
     private static final Logger LOG = LogManager.getLogger(PixivClient.class);
+    @Getter
     private final PixivUser userData;
     private final HashMap<String, String> cookie;
     @Getter
@@ -71,7 +71,6 @@ public class PixivClient {
             userData = null;
         }
     }
-
 
     public PixivClient(String cookieString) throws IOException {
         cookie = parseCookie(cookieString);
@@ -139,18 +138,13 @@ public class PixivClient {
         if (proxy != null) c.proxy(proxy);
     }
 
-    public void getFullPages(PixivArtwork artwork) {
-        try {
-            Connection c = Jsoup.connect(String.format(Urls.PAGES, artwork.getId()).concat("?lang=").concat(getPixivLanguageTag())).ignoreContentType(true).cookies(cookie).method(Connection.Method.GET).timeout(10 * 1000);
-            setConnectionProxy(c);
-            JSONArray body = JSONObject.parseObject(c.get().body().ownText()).getJSONArray("body");
-            artwork.setImageUrls(new LinkedList<>());
-            for (int i = 0; i < body.size(); i++) {
-                artwork.getImageUrls().add(body.getJSONObject(i).getJSONObject("urls").getString("original"));
-            }
-        } catch (IOException e) {
-            artwork.setErrorOccurred(true);
-            LOG.error("Error getting full page of artwork", e);
+    public void getFullPages(PixivArtwork artwork) throws IOException {
+        Connection c = Jsoup.connect(String.format(Urls.PAGES, artwork.getId()).concat("?lang=").concat(getPixivLanguageTag())).ignoreContentType(true).cookies(cookie).method(Connection.Method.GET).timeout(10 * 1000);
+        setConnectionProxy(c);
+        JSONArray body = JSONObject.parseObject(c.get().body().ownText()).getJSONArray("body");
+        artwork.setImageUrls(new LinkedList<>());
+        for (int i = 0; i < body.size(); i++) {
+            artwork.getImageUrls().add(body.getJSONObject(i).getJSONObject("urls").getString("original"));
         }
     }
 
@@ -187,13 +181,28 @@ public class PixivClient {
         obj.put("comment", "");
         obj.put("tags", new JSONArray());
 
-        Connection c = Jsoup.connect(Urls.ADD_BOOKMARK).ignoreContentType(true).method(Connection.Method.POST).cookies(cookie).timeout(10 * 1000).requestBody(obj.toString());
+        final String requestBody = obj.toString();
+
+        Connection c = Jsoup.connect(Urls.ADD_BOOKMARK)
+                .ignoreContentType(true)
+                .method(Connection.Method.POST)
+                .cookies(cookie)
+                .timeout(10 * 1000)
+                .userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36")
+                .header("Accept","application/json")
+                .header("Accept-Language","zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6")
+                .header("Content-Type","application/json; charset=utf-8")
+                .header("Origin","https://www.pixiv.net")
+                .header("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0")
+                .header("Content-Length", String.valueOf(requestBody.length()))
+                .header("X-Csrf-Token", userData.getToken())
+                .requestBody(requestBody);
         setConnectionProxy(c);
 
-        LOG.info("Ready to post");
-        final JSONObject response = JSONObject.parseObject(c.execute().body());
-        LOG.info("Got response {}", response);
-        LOG.info(response.toString(JSONWriter.Feature.PrettyFormat));
+        final Connection.Response execute = c.execute();
+        String responseStr = execute.body();
+        responseStr = new String(responseStr.getBytes(StandardCharsets.UTF_8));
+        final JSONObject response = JSONObject.parseObject(responseStr);
         return !response.getBoolean("error");
     }
 

@@ -25,8 +25,18 @@
                <content>
                   <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0">
                      <children>
-                        <Label text="Cookie:" />
-                        <TextField fx:id="cookieField" />
+                        <HBox>
+                           <children>
+                              <Label maxWidth="1.7976931348623157E308" text="Cookie:" HBox.hgrow="ALWAYS" />
+                              <Label fx:id="userNameLbl" />
+                           </children>
+                        </HBox>
+                        <HBox>
+                           <children>
+                              <TextField fx:id="cookieField" HBox.hgrow="ALWAYS" />
+                              <Button mnemonicParsing="false" onAction="#login" text="登录" />
+                           </children>
+                        </HBox>
                         <Label text="代理:" />
                         <HBox spacing="10.0">
                            <children>
@@ -41,7 +51,7 @@
                         </HBox>
                         <Label text="作品id:" />
                         <TextField fx:id="idField" />
-                        <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#openArtworkBtnOnAction" text="打开" VBox.vgrow="ALWAYS" />
+                        <Button fx:id="openArtworkBtn" disable="true" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#openArtworkBtnOnAction" text="打开" VBox.vgrow="ALWAYS" />
                         <HBox alignment="CENTER_RIGHT">
                            <children>
                               <Button mnemonicParsing="false" onAction="#save" text="保存" />

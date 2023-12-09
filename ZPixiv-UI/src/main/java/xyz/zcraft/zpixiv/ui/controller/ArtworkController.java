@@ -163,38 +163,36 @@ public class ArtworkController implements Initializable, Refreshable {
                 Platform.runLater(() -> loadPane.setVisible(true));
                 client.getFullPages(artwork);
 
-                if (!artwork.isErrorOccurred()) {
-                    final Image image;
-                    URL url = new URL(artwork.getUrls().getString("small"));
-                    URLConnection c;
+                final Image image;
+                URL url = new URL(artwork.getUrls().getString("small"));
+                URLConnection c;
 
-                    if (client.getProxy() != null)
-                        c = url.openConnection(client.getProxy());
-                    else c = url.openConnection();
+                if (client.getProxy() != null)
+                    c = url.openConnection(client.getProxy());
+                else c = url.openConnection();
 
-                    c.setRequestProperty("Referer", "https://www.pixiv.net");
+                c.setRequestProperty("Referer", "https://www.pixiv.net");
 
-                    Path tempFile = Files.createTempFile("zpixiv-", ".tmp");
-                    tempFile.toFile().deleteOnExit();
+                Path tempFile = Files.createTempFile("zpixiv-", ".tmp");
+                tempFile.toFile().deleteOnExit();
 
-                    var o = Files.newOutputStream(tempFile);
-                    var b = new BufferedInputStream(c.getInputStream());
-                    byte[] buffer = new byte[10240];
-                    int size;
-                    while ((size = b.read(buffer)) != -1) {
-                        o.write(buffer, 0, size);
-                    }
-                    o.close();
-                    b.close();
-
-                    image = new Image(tempFile.toFile().toURI().toURL().toString(), true);
-                    Platform.runLater(() -> {
-                        if (imgView.getImage() != null) return;
-                        imgView.setImage(image);
-                        blurImgView.setImage(image);
-                    });
-                    LOG.info("Preview image loaded");
+                var o = Files.newOutputStream(tempFile);
+                var b = new BufferedInputStream(c.getInputStream());
+                byte[] buffer = new byte[10240];
+                int size;
+                while ((size = b.read(buffer)) != -1) {
+                    o.write(buffer, 0, size);
                 }
+                o.close();
+                b.close();
+
+                image = new Image(tempFile.toFile().toURI().toURL().toString(), true);
+                Platform.runLater(() -> {
+                    if (imgView.getImage() != null) return;
+                    imgView.setImage(image);
+                    blurImgView.setImage(image);
+                });
+                LOG.info("Preview image loaded");
             } catch (IOException e) {
                 LOG.error("Exception in loading preview image", e);
                 Main.showAlert("错误", "加载预览图像时出现错误");
@@ -296,14 +294,17 @@ public class ArtworkController implements Initializable, Refreshable {
     public void bookmarkBtnOnAction() {
         if (!bookmarked) {
             bmProgress.setVisible(true);
+            bookmarkBtn.setDisable(true);
             Main.getTpe().submit(() -> {
                 try {
                     bookmarked = client.addBookmark(artwork);
+                    Main.showAlert("提示", "收藏成功~");
                 } catch (Exception e) {
                     Main.showAlert("错误", "收藏失败");
                     LOG.error("Error bookmarking artwork", e);
                 }
 
+                bookmarkBtn.setDisable(false);
                 reloadBookmarkStatus();
                 Platform.runLater(() -> bmProgress.setVisible(false));
             });
