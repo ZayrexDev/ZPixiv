@@ -18,6 +18,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 public class Main extends Application {
     private static final Logger LOG = LogManager.getLogger(Main.class);
+
+    @Getter
     private static Stage stage = null;
 
     @Getter

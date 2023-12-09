@@ -14,6 +14,12 @@ import xyz.zcraft.zpixiv.ui.util.ResourceLoader;
 import java.io.IOException;
 
 public class MsgController {
+    private static final int WIDTH = 135;
+    private final Timeline tl = new Timeline();
+    private final Timeline tReverse = new Timeline();
+    private final TranslateTransition tt = new TranslateTransition();
+    private final TranslateTransition ttr = new TranslateTransition();
+    private final TranslateTransition hide = new TranslateTransition();
     @FXML
     public Label titleLbl;
     @FXML
@@ -21,11 +27,9 @@ public class MsgController {
     @FXML
     @Getter
     public AnchorPane root;
-
     @FXML
     @Getter
     public Line bar;
-
     private volatile boolean closed = false;
 
     public static MsgController newInstance(String title, String msg) {
@@ -33,17 +37,18 @@ public class MsgController {
             FXMLLoader loader = new FXMLLoader(ResourceLoader.load("fxml/Alert.fxml"));
             loader.load();
             final MsgController controller = loader.getController();
-            controller.setTexts(title, msg);
-            controller.initAnimation();
+            controller.init(title, msg);
             return controller;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void setTexts(String title, String msg) {
+    private void init(String title, String msg) {
         titleLbl.setText(title);
         msgLbl.setText(msg);
+        initAnimation();
+        root.setPrefWidth(WIDTH);
     }
 
     public void playTimeLine() {
@@ -51,16 +56,10 @@ public class MsgController {
         root.setVisible(true);
     }
 
-    private final Timeline tl = new Timeline();
-    private final Timeline tReverse = new Timeline();
-    private final TranslateTransition tt = new TranslateTransition();
-    private final TranslateTransition ttr = new TranslateTransition();
-    private final TranslateTransition hide = new TranslateTransition();
-
     public void initAnimation() {
         tl.getKeyFrames().addAll(
                 // Pane
-                new KeyFrame(Duration.millis(0), new KeyValue(root.translateXProperty(), 135, Interpolator.EASE_BOTH)),
+                new KeyFrame(Duration.millis(0), new KeyValue(root.translateXProperty(), WIDTH, Interpolator.EASE_BOTH)),
                 new KeyFrame(Duration.millis(100), new KeyValue(root.translateXProperty(), 0, Interpolator.EASE_BOTH)),
                 new KeyFrame(Duration.millis(100), new KeyValue(root.translateXProperty(), 0, Interpolator.EASE_BOTH)),
                 new KeyFrame(Duration.millis(200), new KeyValue(root.translateXProperty(), 10, Interpolator.EASE_BOTH)),
@@ -69,7 +68,7 @@ public class MsgController {
                 // Bar
                 new KeyFrame(Duration.millis(200), new KeyValue(bar.opacityProperty(), 1)),
                 new KeyFrame(Duration.millis(100), new KeyValue(bar.endXProperty(), 0)),
-                new KeyFrame(Duration.millis(3100), new KeyValue(bar.endXProperty(), 135, Interpolator.EASE_BOTH))
+                new KeyFrame(Duration.millis(3100), new KeyValue(bar.endXProperty(), WIDTH, Interpolator.EASE_BOTH))
         );
         tl.setOnFinished(e -> hide.playFromStart());
         tl.setAutoReverse(false);
@@ -93,7 +92,7 @@ public class MsgController {
         ttr.setDuration(Duration.millis(100));
 
         hide.setNode(root);
-        hide.setToX(135);
+        hide.setToX(WIDTH);
         hide.setInterpolator(Interpolator.EASE_BOTH);
         hide.setDuration(Duration.millis(150));
         hide.setOnFinished(e -> ((VBox) root.getParent()).getChildren().remove(root));
@@ -107,14 +106,14 @@ public class MsgController {
     }
 
     public void mouseEntered() {
-        if(closed || tl.getCurrentTime().greaterThan(Duration.millis(3000))) return;
+        if (closed || tl.getCurrentTime().greaterThan(Duration.millis(3000))) return;
         tl.pause();
         tReverse.playFromStart();
         tt.playFromStart();
     }
 
     public void mouseExited() {
-        if(closed) return;
+        if (closed) return;
         tReverse.stop();
         tl.playFrom(Duration.millis(300));
         ttr.playFromStart();

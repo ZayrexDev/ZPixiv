@@ -1,17 +1,17 @@
 package xyz.zcraft.zpixiv.ui.controller;
 
 import javafx.application.Platform;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
-import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xyz.zcraft.zpixiv.ui.Main;
 import xyz.zcraft.zpixiv.ui.util.Refreshable;
 import xyz.zcraft.zpixiv.ui.util.ResourceLoader;
 
@@ -31,27 +31,26 @@ public class MainController implements Initializable {
     public Button closePageBtn;
     public Button refreshBtn;
     public VBox msgPane;
-    private LoginController loginController;
 
-    public void profileBtnOnAction(KeyEvent keyEvent) {
+    public void profileBtnOnAction() {
     }
 
-    public void menuBtnOnAction(ActionEvent actionEvent) {
+    public void menuBtnOnAction() {
     }
 
-    public void discBtnOnAction(ActionEvent actionEvent) {
+    public void discBtnOnAction() {
     }
 
-    public void folBtnOnAction(ActionEvent actionEvent) {
+    public void folBtnOnAction() {
     }
 
-    public void setBtnOnAction(ActionEvent actionEvent) {
+    public void setBtnOnAction() {
     }
 
-    public void aboutBtnOnAction(ActionEvent actionEvent) {
+    public void aboutBtnOnAction() {
     }
 
-    public void minBtnOnAction(ActionEvent actionEvent) {
+    public void minBtnOnAction() {
 
     }
 
@@ -106,5 +105,44 @@ public class MainController implements Initializable {
             msgPane.getChildren().add(cont.getRoot());
             cont.playTimeLine();
         });
+    }
+
+    public void titleBarDragged(MouseEvent mouseEvent) {
+        Main.getStage().setX(mouseEvent.getScreenX() - offsetX);
+        Main.getStage().setY(mouseEvent.getScreenY() - offsetY);
+    }
+
+    private double offsetX = 0;
+    private double offsetY = 0;
+    public void titleBarPressed(MouseEvent mouseEvent) {
+        offsetX = mouseEvent.getSceneX();
+        offsetY = mouseEvent.getSceneY();
+    }
+
+    public void resizeE(MouseEvent mouseEvent) {
+        if(Main.getStage().getWidth() + mouseEvent.getScreenX() - offsetE >= main.getMinWidth()) {
+            Main.getStage().setWidth(Main.getStage().getWidth() + mouseEvent.getScreenX() - offsetE);
+            offsetE = mouseEvent.getScreenX();
+        }
+    }
+
+    public void resizeS(MouseEvent mouseEvent) {
+        if(Main.getStage().getHeight() + mouseEvent.getSceneY() - offsetS >= main.getMinHeight()) {
+            Main.getStage().setHeight(Main.getStage().getHeight() + mouseEvent.getSceneY() - offsetS);
+            offsetS = mouseEvent.getSceneY();
+        }
+    }
+
+    public void resizeSE(MouseEvent mouseEvent) {
+        resizeS(mouseEvent);
+        resizeE(mouseEvent);
+    }
+
+    private double offsetE = -1;
+    private double offsetS = -1;
+
+    public void resizeStart(MouseEvent mouseEvent) {
+        offsetE = mouseEvent.getScreenX();
+        offsetS = mouseEvent.getSceneY();
     }
 }
