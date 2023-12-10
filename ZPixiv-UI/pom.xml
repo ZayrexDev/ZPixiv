@@ -65,5 +65,11 @@
             <artifactId>fastjson2</artifactId>
             <version>2.0.42</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.madgag/animated-gif-lib -->
+        <dependency>
+            <groupId>com.madgag</groupId>
+            <artifactId>animated-gif-lib</artifactId>
+            <version>1.4</version>
+        </dependency>
     </dependencies>
 </project>

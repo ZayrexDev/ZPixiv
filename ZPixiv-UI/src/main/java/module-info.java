@@ -7,6 +7,8 @@ module ZPixiv.UI {
     requires javafx.web;
     requires com.alibaba.fastjson2;
     requires lombok;
+    requires animated.gif.lib;
+    requires java.desktop;
 
     exports xyz.zcraft.zpixiv.ui;
     exports xyz.zcraft.zpixiv.ui.controller;

@@ -1,20 +1,18 @@
 package xyz.zcraft.zpixiv.ui.controller;
 
+import com.madgag.gif.fmsware.AnimatedGifEncoder;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.web.WebView;
 import javafx.util.Duration;
@@ -27,9 +25,8 @@ import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
 import xyz.zcraft.zpixiv.ui.Main;
 import xyz.zcraft.zpixiv.ui.util.Refreshable;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import javax.imageio.ImageIO;
+import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
@@ -37,6 +34,7 @@ import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
+import java.util.zip.ZipInputStream;
 
 public class ArtworkController implements Initializable, Refreshable {
     private static final Logger LOG = LogManager.getLogger(ArtworkController.class);
@@ -88,9 +86,10 @@ public class ArtworkController implements Initializable, Refreshable {
     @FXML
     public Label pageLbl;
     public AnchorPane pageWrapperPane;
+    public FlowPane tagsPane;
     private PixivClient client;
     private PixivArtwork artwork;
-    private LoadTask currentTask = null;
+    private volatile LoadTask currentTask = null;
     private Image[] images;
     private int currentIndex = 1;
     private FadeTransition pageWrapperPaneFadeOutTransition;
@@ -117,7 +116,7 @@ public class ArtworkController implements Initializable, Refreshable {
     }
 
     public void nextPageBtnOnAction() {
-        if (currentIndex + 1 >= artwork.getPageCount()) {
+        if (currentIndex + 1 >= artwork.getOrigData().getPageCount()) {
             currentIndex++;
             updateImageIndex();
         }
@@ -131,14 +130,16 @@ public class ArtworkController implements Initializable, Refreshable {
     }
 
     private void updateImageIndex() {
-        pageLbl.setText(currentIndex + "/" + artwork.getPageCount());
-        if(currentIndex == 1 && images[0] == null) {
-            imgView.setImage(previewImg);
-        } else {
-            imgView.setImage(images[currentIndex - 1]);
-        }
-        nextPageBtn.setDisable(currentIndex >= artwork.getPageCount());
-        prevPageBtn.setDisable(currentIndex <= 1);
+        Platform.runLater(() -> {
+            pageLbl.setText(currentIndex + "/" + artwork.getOrigData().getPageCount());
+            if (currentIndex == 1 && images[0] == null) {
+                imgView.setImage(previewImg);
+            } else {
+                imgView.setImage(images[currentIndex - 1]);
+            }
+            nextPageBtn.setDisable(currentIndex >= artwork.getOrigData().getPageCount());
+            prevPageBtn.setDisable(currentIndex <= 1);
+        });
     }
 
     public void followBtnOnAction() {
@@ -158,7 +159,7 @@ public class ArtworkController implements Initializable, Refreshable {
         refreshTasks();
     }
 
-    private void refreshTasks() {
+    private synchronized void refreshTasks() {
         tasks.removeIf(LoadTask::isFinished);
 
         if (currentTask != null) {
@@ -213,53 +214,141 @@ public class ArtworkController implements Initializable, Refreshable {
     public void load(PixivClient client, PixivArtwork artwork) {
         if (client == null && artwork == null) return;
 
-        LOG.info("Loading artwork {}", artwork.getId());
+        LOG.info("Loading artwork {}", artwork.getOrigData().getId());
         this.client = client;
         this.artwork = artwork;
         reloadArtworkStatus();
 
-        titleLbl.setText(artwork.getTitle());
+        titleLbl.setText(artwork.getOrigData().getTitle());
 
-        if (artwork.getXRestrict() == 1) {
+        if (artwork.getOrigData().getXRestrict() == 1) {
             xResLbl.setVisible(true);
         } else {
             titleBox.getChildren().remove(0);
         }
 
-        if (artwork.getDescription().trim().isEmpty()) {
+        if (artwork.getOrigData().getDescription().trim().isEmpty()) {
             ((VBox) descView.getParent()).getChildren().remove(descView);
         } else {
-            descView.setContextMenuEnabled(false);
-            descView.getEngine().setUserStyleSheetLocation("data:,body{font: 12px Arial;}");
-            descView.getEngine().loadContent(artwork.getDescription());
+            Platform.runLater(() -> {
+                descView.setContextMenuEnabled(false);
+                descView.getEngine().setUserStyleSheetLocation("data:,body{font: 12px Arial;}");
+                descView.getEngine().loadContent(artwork.getOrigData().getDescription());
+            });
         }
 
         authorNameLbl.setText(artwork.getAuthor().getName());
-        pubDateLbl.setText(artwork.getCreateDate());
+        pubDateLbl.setText(artwork.getOrigData().getCreateDate());
 
-        likeLbl.setText(String.valueOf(artwork.getLikeCount()));
-        bookmarkLbl.setText(String.valueOf(artwork.getBookmarkCount()));
-        viewLbl.setText(String.valueOf(artwork.getViewCount()));
+        likeLbl.setText(String.valueOf(artwork.getOrigData().getLikeCount()));
+        bookmarkLbl.setText(String.valueOf(artwork.getOrigData().getBookmarkCount()));
+        viewLbl.setText(String.valueOf(artwork.getOrigData().getViewCount()));
 
-        images = new Image[artwork.getPageCount()];
+        images = new Image[artwork.getOrigData().getPageCount()];
 
-        if (artwork.getPageCount() <= 1) {
+        if (artwork.getOrigData().getPageCount() <= 1) {
             pageWrapperPane.setVisible(false);
             pageLbl.setVisible(false);
         } else {
             prevPageBtn.setDisable(true);
-            nextPageBtn.setDisable(artwork.getPageCount() == 1);
-            pageLbl.setText("1/" + artwork.getPageCount());
+            nextPageBtn.setDisable(artwork.getOrigData().getPageCount() == 1);
+            pageLbl.setText("1/" + artwork.getOrigData().getPageCount());
         }
-
 
         loadProgressBar.setProgress(ProgressBar.INDETERMINATE_PROGRESS);
 
+        loadTags();
+
         Main.getTpe().submit(getPreviewLoadRunnable());
         Main.getTpe().submit(getAuthorImgRunnable());
-        Main.getTpe().submit(getImageLoadRunnable());
 
-        LOG.info("Loading artwork {} complete", artwork.getId());
+        if (artwork.isGif()) {
+            Main.getTpe().submit(getGifLoadRunnable());
+        } else {
+            Main.getTpe().submit(getImageLoadRunnable());
+        }
+
+        LOG.info("Loading artwork {} complete", artwork.getOrigData().getId());
+    }
+
+    private Runnable getGifLoadRunnable() {
+        return () -> {
+            LOG.info("Loading gif artwork {}", artwork.getOrigData().getId());
+            final LoadTask t = new LoadTask("加载动图");
+            final LoadTask t1 = new LoadTask("解析动图");
+            postLoadTask(t);
+            postLoadTask(t1);
+            int tries = 3;
+
+            while(tries-- >= 1) {
+                try {
+                    client.getGifData(artwork);
+
+                    URL url = new URL(artwork.getGifData().getSrc());
+
+                    URLConnection c;
+                    if (client.getProxy() != null)
+                        c = url.openConnection(client.getProxy());
+                    else c = url.openConnection();
+
+                    c.setRequestProperty("Referer", PixivClient.Urls.REFERER);
+
+                    final InputStream inputStream = c.getInputStream();
+                    ZipInputStream zis = new ZipInputStream(inputStream);
+
+                    AnimatedGifEncoder age = new AnimatedGifEncoder();
+                    age.setRepeat(0);
+                    age.setDelay(artwork.getGifData().getOrigFrame().getJSONObject(0).getInteger("delay"));
+
+                    final Path tempFile = Files.createTempFile("zpixiv-", ".tmp");
+                    tempFile.toFile().deleteOnExit();
+
+                    age.start(Files.newOutputStream(tempFile));
+
+                    final double total = artwork.getGifData().getOrigFrame().size();
+                    double cur = 0;
+                    while (zis.getNextEntry() != null) {
+                        age.addFrame(ImageIO.read(zis));
+                        t.setProgress(++cur / total);
+                    }
+
+                    age.finish();
+
+                    t.setFinished(true);
+
+                    final Image image = new Image(Files.newInputStream(tempFile));
+
+                    Platform.runLater(() -> imgView.setImage(image));
+
+                    t1.setFinished(true);
+                } catch (IOException e) {
+                    LOG.error("Can't load gif data", e);
+                }
+            }
+
+            t.setFailed(true);
+            t1.setFailed(true);
+            Main.showAlert("错误", "加载动图时出现错误");
+        };
+    }
+
+    private void loadTags() {
+        artwork.getTags().forEach(tag -> {
+            Hyperlink orig = new Hyperlink("#" + tag.orig());
+
+            Label trans = new Label(tag.trans());
+            trans.setTextFill(Color.GRAY);
+
+            HBox tagBox = new HBox();
+            tagBox.setPadding(new Insets(3));
+            tagBox.setPrefWidth(Region.USE_COMPUTED_SIZE);
+            tagBox.setPrefHeight(Region.USE_COMPUTED_SIZE);
+            tagBox.setAlignment(Pos.CENTER);
+
+            tagBox.getChildren().addAll(orig, trans);
+
+            tagsPane.getChildren().add(tagBox);
+        });
     }
 
     private Runnable getPreviewLoadRunnable() {
@@ -269,7 +358,7 @@ public class ArtworkController implements Initializable, Refreshable {
             try {
                 client.getFullPages(artwork);
 
-                URL url = new URL(artwork.getUrls().getString("small"));
+                URL url = new URL(artwork.getOrigData().getUrls().getString("small"));
                 URLConnection c;
 
                 if (client.getProxy() != null)
@@ -315,8 +404,8 @@ public class ArtworkController implements Initializable, Refreshable {
             while (tries >= 0) {
                 try {
                     client.getFullPages(artwork);
-                    LOG.info("Got {} pages for artwork {}", artwork.getPageCount(), artwork.getId());
-                    for (int i = 1; i <= artwork.getPageCount(); i++) {
+                    LOG.info("Got {} pages for artwork {}", artwork.getOrigData().getPageCount(), artwork.getOrigData().getId());
+                    for (int i = 1; i <= artwork.getOrigData().getPageCount(); i++) {
                         Main.getTpe().submit(getImagePageLoadRunnable(i));
                     }
                     t.setFinished(true);
@@ -336,7 +425,7 @@ public class ArtworkController implements Initializable, Refreshable {
 
     private Runnable getImagePageLoadRunnable(int index) {
         return () -> {
-            LOG.info("Loading page {} for artwork {}", index, artwork.getId());
+            LOG.info("Loading page {} for artwork {}", index, artwork.getOrigData().getId());
             final LoadTask t = new LoadTask("获取作品(" + index + ")");
             postLoadTask(t);
             int tries = 3;
@@ -376,7 +465,7 @@ public class ArtworkController implements Initializable, Refreshable {
                     updateImageIndex();
 
                     t.setFinished(true);
-                    LOG.info("Page {} for artwork {} loaded", index, artwork.getId());
+                    LOG.info("Page {} for artwork {} loaded", index, artwork.getOrigData().getId());
                     return;
                 } catch (IOException e) {
                     LOG.error("Failed to get page " + index, e);
@@ -418,14 +507,14 @@ public class ArtworkController implements Initializable, Refreshable {
 
     @Override
     public void refresh() {
-        LOG.info("Reloading artwork {}", artwork.getId());
+        LOG.info("Reloading artwork {}", artwork.getOrigData().getId());
         Main.getTpe().submit(getPreviewLoadRunnable());
         Main.getTpe().submit(getAuthorImgRunnable());
         Main.getTpe().submit(getImageLoadRunnable());
     }
 
     public void likeBtnOnAction() {
-        if (!artwork.isLiked()) {
+        if (!artwork.getOrigData().isLiked()) {
             final LoadTask likeTask = new LoadTask("赞!");
             postLoadTask(likeTask);
             likeBtn.setDisable(true);
@@ -473,7 +562,7 @@ public class ArtworkController implements Initializable, Refreshable {
             bookmarkBtn.setStyle("-fx-shape: \"" + SvgIcon.FULL + "\"; -fx-background-color: #ff4563;");
         } else bookmarkBtn.setStyle("");
 
-        if (artwork.isLiked()) {
+        if (artwork.getOrigData().isLiked()) {
             likeBtn.setStyle("-fx-shape: \"" + SvgIcon.TICK + "\"; -fx-background-color: #48b3f7;");
             likeTextLbl.setStyle("-fx-text-fill: #48b3f7;");
         } else {
@@ -483,14 +572,14 @@ public class ArtworkController implements Initializable, Refreshable {
     }
 
     public void hidePageWrapper() {
-        if (artwork.getPageCount() <= 1) return;
+        if (artwork.getOrigData().getPageCount() <= 1) return;
 
         pageWrapperPaneFadeInTransition.stop();
         pageWrapperPaneFadeOutTransition.playFromStart();
     }
 
     public void showPageWrapper() {
-        if (artwork.getPageCount() <= 1) return;
+        if (artwork.getOrigData().getPageCount() <= 1) return;
 
         pageWrapperPaneFadeOutTransition.stop();
         pageWrapperPaneFadeInTransition.playFromStart();
@@ -510,7 +599,10 @@ public class ArtworkController implements Initializable, Refreshable {
 @RequiredArgsConstructor
 final class LoadTask {
     private final String name;
+    private final LinkedList<Consumer<Double>> changeListeners = new LinkedList<>();
     private double progress = -1;
+    private boolean failed = false;
+    private boolean finished = false;
 
     public void setProgress(double progress) {
         this.progress = progress;
@@ -527,11 +619,6 @@ final class LoadTask {
         fireChanged();
     }
 
-    private boolean failed = false;
-    private boolean finished = false;
-
-    private final LinkedList<Consumer<Double>> changeListeners = new LinkedList<>();
-
     public void addListener(Consumer<Double> lis) {
         changeListeners.add(lis);
     }
@@ -543,10 +630,10 @@ final class LoadTask {
     @Override
     public String toString() {
         return "LoadTask{" +
-               "name='" + name + '\'' +
-               ", progress=" + progress +
-               ", failed=" + failed +
-               ", finished=" + finished +
-               '}';
+                "name='" + name + '\'' +
+                ", progress=" + progress +
+                ", failed=" + failed +
+                ", finished=" + finished +
+                '}';
     }
 }

@@ -37,6 +37,10 @@ public class Main extends Application {
             final Parent main = loader.load();
             mainController = loader.getController();
             Scene s = new Scene(main);
+
+//            JMetro jMetro = new JMetro(Style.DARK);
+//            jMetro.setScene(s);
+
             stage.setScene(s);
 
             stage.initStyle(StageStyle.UNDECORATED);

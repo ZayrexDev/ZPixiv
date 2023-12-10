@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
+import xyz.zcraft.zpixiv.api.artwork.GifData;
 import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
 import xyz.zcraft.zpixiv.api.user.PixivUser;
 
@@ -16,9 +17,10 @@ import java.io.IOException;
 import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-
+@SuppressWarnings("unused")
 public class PixivClient {
     private static final Logger LOG = LogManager.getLogger(PixivClient.class);
+    private static final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0";
     @Getter
     private final PixivUser userData;
     private final HashMap<String, String> cookie;
@@ -30,8 +32,7 @@ public class PixivClient {
         cookie = parseCookie(cookieString);
         this.proxy = proxy;
         if (getUserData) {
-            Connection c = Jsoup.connect("https://www.pixiv.net").ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-            setConnectionProxy(c);
+            final Connection c = getConnection(Urls.MAIN, Connection.Method.GET);
             String text = Objects.requireNonNull(c.get().getElementById("meta-global-data")).attr("content");
             final JSONObject jsonObject = JSONObject.parseObject(text);
             JSONObject userDataJson = jsonObject.getJSONObject("userData");
@@ -83,13 +84,37 @@ public class PixivClient {
         }
     }
 
+    public void getGifData(PixivArtwork artwork) throws IOException {
+        final var c = getConnection(
+                String.format(Urls.GIF_DATA, artwork.getOrigData().getId())
+                        .concat("?lang=")
+                        .concat(getPixivLanguageTag()),
+                Connection.Method.GET
+        );
+        JSONObject body = JSONObject.parseObject(c.get().body().ownText()).getJSONObject("body");
+        artwork.setGifData(body.to(GifData.class));
+    }
+
+    private Connection getConnection(String url, Connection.Method method) {
+        final var c = Jsoup.connect(url)
+                .cookies(cookie)
+                .userAgent(userAgent)
+                .ignoreContentType(true)
+                .method(method)
+                .timeout(10 * 1000)
+                .header("Origin", "https://www.pixiv.net");
+        if (userData != null)
+            c.header("X-Csrf-Token", userData.getToken());
+        setConnectionProxy(c);
+        return c;
+    }
+
     private void setConnectionProxy(Connection c) {
         if (proxy != null) c.proxy(proxy);
     }
 
     public void getFullPages(PixivArtwork artwork) throws IOException {
-        Connection c = Jsoup.connect(String.format(Urls.PAGES, artwork.getId()).concat("?lang=").concat(getPixivLanguageTag())).ignoreContentType(true).cookies(cookie).method(Connection.Method.GET).timeout(10 * 1000);
-        setConnectionProxy(c);
+        final Connection c = getConnection(String.format(Urls.PAGES, artwork.getOrigData().getId()).concat("?lang=").concat(getPixivLanguageTag()), Connection.Method.GET);
         JSONArray body = JSONObject.parseObject(c.get().body().ownText()).getJSONArray("body");
         artwork.setImageUrls(new LinkedList<>());
         for (int i = 0; i < body.size(); i++) {
@@ -98,56 +123,58 @@ public class PixivClient {
     }
 
     public PixivArtwork getArtwork(String id) throws IOException {
-        Connection c = Jsoup.connect(getArtworkPageUrl(id)).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-        setConnectionProxy(c);
-
+        final var c = getConnection(getArtworkPageUrl(id), Connection.Method.GET);
         final JSONObject content = JSONObject.parseObject(Objects.requireNonNull(c.get().head().getElementById("meta-preload-data")).attr("content"));
 
-        JSONObject illustJsonObj = content.getJSONObject("illust").getJSONObject(id);
+        final JSONObject illustJsonObj = content.getJSONObject("illust").getJSONObject(id);
 
-        PixivArtwork pixivArtwork = illustJsonObj.to(PixivArtwork.class);
+        final PixivArtwork.OrigData pixivArtworkOrig = illustJsonObj.to(PixivArtwork.OrigData.class);
+        final PixivArtwork pixivArtwork = new PixivArtwork(pixivArtworkOrig);
 
         pixivArtwork.setOrigJson(illustJsonObj);
 
-        JSONArray jsonArray = illustJsonObj.getJSONObject("tags").getJSONArray("tags");
-        LinkedHashSet<String> tags = new LinkedHashSet<>();
+        final JSONArray jsonArray = illustJsonObj.getJSONObject("tags").getJSONArray("tags");
+        LinkedHashSet<PixivArtwork.Tag> tags = new LinkedHashSet<>();
         for (int i = 0; i < jsonArray.size(); i++) {
-            tags.add(jsonArray.getJSONObject(i).getString("tag"));
-        }
-        pixivArtwork.setTranslatedTags(tags);
+//            tags.add(jsonArray.getJSONObject(i).getString("tag"));
+            final JSONObject curTagObj = jsonArray.getJSONObject(i);
+            final String orig = curTagObj.getString("tag");
+            String trans = null;
+            final JSONObject transObj = curTagObj.getJSONObject("translation");
 
-        final JSONObject userJsonObj = content.getJSONObject("user").getJSONObject(pixivArtwork.getUserId());
+            if (transObj != null) {
+                if (transObj.getString(getPixivLanguageTag()) != null)
+                    trans = transObj.getString(getPixivLanguageTag());
+                else trans = transObj.getString("en");
+            }
+            tags.add(new PixivArtwork.Tag(orig, trans));
+        }
+        pixivArtwork.setTags(tags);
+
+        final JSONObject userJsonObj = content.getJSONObject("user").getJSONObject(pixivArtwork.getOrigData().getUserId());
         pixivArtwork.setAuthor(userJsonObj.to(PixivUser.class));
 
         return pixivArtwork;
     }
 
     public boolean likeArtwork(PixivArtwork artwork) throws IOException {
-        LOG.info("Adding like to {}", artwork.getId());
+        LOG.info("Adding like to {}", artwork.getOrigData().getId());
         final JSONObject obj = new JSONObject();
-        obj.put("illust_id", artwork.getId());
+        obj.put("illust_id", artwork.getOrigData().getId());
 
         final String requestBody = obj.toString();
 
-        Connection c = Jsoup.connect(Urls.LIKE)
-                .ignoreContentType(true)
-                .method(Connection.Method.POST)
-                .cookies(cookie)
-                .timeout(10 * 1000)
-                .userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36")
+        final var c = getConnection(Urls.LIKE, Connection.Method.POST)
                 .header("Accept", "application/json")
                 .header("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6")
                 .header("Content-Type", "application/json; charset=utf-8")
-                .header("Origin", "https://www.pixiv.net")
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0")
                 .header("Content-Length", String.valueOf(requestBody.length()))
-                .header("X-Csrf-Token", userData.getToken())
                 .requestBody(requestBody);
         setConnectionProxy(c);
 
         final JSONObject response = JSONObject.parseObject(new String(c.execute().body().getBytes(StandardCharsets.UTF_8)));
         if (!response.getBoolean("error")) {
-            artwork.setLiked(true);
+            artwork.getOrigData().setLiked(true);
             return true;
         } else {
             return false;
@@ -155,28 +182,20 @@ public class PixivClient {
     }
 
     public boolean addBookmark(PixivArtwork artwork) throws IOException {
-        LOG.info("Adding bm to {}", artwork.getId());
+        LOG.info("Adding bm to {}", artwork.getOrigData().getId());
         final JSONObject obj = new JSONObject();
-        obj.put("illust_id", artwork.getId());
+        obj.put("illust_id", artwork.getOrigData().getId());
         obj.put("restrict", 0);
         obj.put("comment", "");
         obj.put("tags", new JSONArray());
 
         final String requestBody = obj.toString();
 
-        Connection c = Jsoup.connect(Urls.ADD_BOOKMARK)
-                .ignoreContentType(true)
-                .method(Connection.Method.POST)
-                .cookies(cookie)
-                .timeout(10 * 1000)
-                .userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36")
+        final var c = getConnection(Urls.ADD_BOOKMARK, Connection.Method.POST)
                 .header("Accept", "application/json")
                 .header("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6")
                 .header("Content-Type", "application/json; charset=utf-8")
-                .header("Origin", "https://www.pixiv.net")
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0")
                 .header("Content-Length", String.valueOf(requestBody.length()))
-                .header("X-Csrf-Token", userData.getToken())
                 .requestBody(requestBody);
         setConnectionProxy(c);
 
@@ -185,7 +204,7 @@ public class PixivClient {
             final JSONObject bmData = new JSONObject();
             bmData.put("id", response.getJSONObject("body").getString("last_bookmark_id"));
             bmData.put("private", false);
-            artwork.setBookmarkData(bmData);
+            artwork.getOrigData().setBookmarkData(bmData);
             return true;
         } else return false;
     }
@@ -423,17 +442,6 @@ public class PixivClient {
 //        return artworks;
 //    }
 
-//    public GifData getGifData(PixivArtwork artwork) throws IOException {
-//        HashMap<String, String> cookie = parseCookie(cookieString);
-//        Connection c = Jsoup.connect(String.format(GIF_DATA, artwork.getId()).concat("?lang=").concat(getPixivLanguageTag())).ignoreContentType(true).cookies(cookie).method(Connection.Method.GET).timeout(10 * 1000);
-//        if (proxy != null) c.proxy(proxy);
-//        JSONObject body = JSONObject.parseObject(c.get().body().ownText()).getJSONObject("body");
-//        GifData gifData = body.to(GifData.class);
-//        artwork.setGifData(gifData);
-//        return gifData;
-//    }
-
-
 //    public void getFullData(PixivArtwork artwork) throws IOException {
 //        HashMap<String, String> cookie = parseCookie(cookieString);
 //        Connection c = Jsoup.connect(getArtworkPageUrl(artwork.getId())).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
@@ -591,20 +599,22 @@ public class PixivClient {
     }
 
     public static class Urls {
-        static final String TOP = "https://www.pixiv.net/ajax/top/illust?mode=all";
-        static final String ADD_BOOKMARK = "https://www.pixiv.net/ajax/illusts/bookmarks/add";
-        static final String LIKE = "https://www.pixiv.net/ajax/illusts/like";
-        static final String RELATED = "https://www.pixiv.net/ajax/illust/%s/recommend/init?limit=%d";
-        static final String ARTWORK = "https://www.pixiv.net/artworks/";
-        static final String USER = "https://www.pixiv.net/ajax/user/%s/profile/all?";
-        static final String USER_TAGS = "https://www.pixiv.net/ajax/tags/frequent/illust?%s";
-        static final String USER_WORKS = "https://www.pixiv.net/ajax/user/%s/profile/illusts?%s&work_category=illust&is_first_page=1";
-        static final String DISCOVERY = "https://www.pixiv.net/ajax/discovery/artworks?mode=%s&limit=%d";
-        static final String GIF_DATA = "https://www.pixiv.net/ajax/illust/%s/ugoira_meta";
-        static final String PAGES = "https://www.pixiv.net/ajax/illust/%s/pages";
-        static final String SEARCH_TOP = "https://www.pixiv.net/ajax/search/top/%s";
-        static final String SEARCH_ILLUST = "https://www.pixiv.net/ajax/search/illustrations/%s?word=%s&mode=%s&p=%d";
-        static final String SEARCH_MANGA = "https://www.pixiv.net/ajax/search/manga/%s?word=%s&mode=%s&p=%d";
-        static final String RANKING = "https://www.pixiv.net/ranking.php";
+        public static final String MAIN = "https://www.pixiv.net/";
+        public static final String REFERER = "https://www.pixiv.net/";
+        public static final String TOP = "https://www.pixiv.net/ajax/top/illust?mode=all";
+        public static final String ADD_BOOKMARK = "https://www.pixiv.net/ajax/illusts/bookmarks/add";
+        public static final String LIKE = "https://www.pixiv.net/ajax/illusts/like";
+        public static final String RELATED = "https://www.pixiv.net/ajax/illust/%s/recommend/init?limit=%d";
+        public static final String ARTWORK = "https://www.pixiv.net/artworks/";
+        public static final String USER = "https://www.pixiv.net/ajax/user/%s/profile/all?";
+        public static final String USER_TAGS = "https://www.pixiv.net/ajax/tags/frequent/illust?%s";
+        public static final String USER_WORKS = "https://www.pixiv.net/ajax/user/%s/profile/illusts?%s&work_category=illust&is_first_page=1";
+        public static final String DISCOVERY = "https://www.pixiv.net/ajax/discovery/artworks?mode=%s&limit=%d";
+        public static final String GIF_DATA = "https://www.pixiv.net/ajax/illust/%s/ugoira_meta";
+        public static final String PAGES = "https://www.pixiv.net/ajax/illust/%s/pages";
+        public static final String SEARCH_TOP = "https://www.pixiv.net/ajax/search/top/%s";
+        public static final String SEARCH_ILLUST = "https://www.pixiv.net/ajax/search/illustrations/%s?word=%s&mode=%s&p=%d";
+        public static final String SEARCH_MANGA = "https://www.pixiv.net/ajax/search/manga/%s?word=%s&mode=%s&p=%d";
+        public static final String RANKING = "https://www.pixiv.net/ranking.php";
     }
 }

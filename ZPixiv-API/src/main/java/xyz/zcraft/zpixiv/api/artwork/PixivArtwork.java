@@ -11,68 +11,11 @@ import java.util.Set;
 
 @Data
 public class PixivArtwork {
-    @JSONField(name = "id")
-    private String id;
-    @JSONField(name = "title")
-    private String title;
-    @JSONField(name = "illustType")
-    private int illustType;
-    @JSONField(name = "xRestrict")
-    private int xRestrict;
-    @JSONField(name = "restrict")
-    private int restrict;
-    @JSONField(name = "sl")
-    private int sl;
-    @JSONField(name = "url")
-    private String url;
-    @JSONField(name = "description")
-    private String description;
-    @JSONField(name = "tags")
-    private JSONArray originalTags;
-    @JSONField(name = "userId")
-    private String userId;
-    @JSONField(name = "userName")
-    private String userName;
-    @JSONField(name = "width")
-    private int width;
-    @JSONField(name = "height")
-    private int height;
-    @JSONField(name = "pageCount")
-    private int pageCount;
-    @JSONField(name = "isBookmarkable")
-    private boolean bookmarkable;
-    @JSONField(name = "bookmarkData")
-    private JSONObject bookmarkData;
-    @JSONField(name = "alt")
-    private String alt;
-    @JSONField(name = "titleCaptionTranslation")
-    private JSONObject titleCaptionTranslation;
-    @JSONField(name = "createDate")
-    private String createDate;
-    @JSONField(name = "updateDate")
-    private String updateDate;
-    @JSONField(name = "isUnlisted")
-    private boolean unlisted;
-    @JSONField(name = "isMasked")
-    private boolean masked;
-    @JSONField(name = "urls")
-    private JSONObject urls;
-    @JSONField(name = "profileImageUrl")
-    private String profileImageUrl;
-    @JSONField(name = "aiType")
-    private int aiType;
-    @JSONField(name = "bookmarkCount")
-    private int bookmarkCount;
-    @JSONField(name = "likeCount")
-    private int likeCount;
-    @JSONField(name = "viewCount")
-    private int viewCount;
-    @JSONField(name = "likeData")
-    private boolean liked;
+    private final OrigData origData;
 
-    private Set<String> translatedTags;
+    private Set<Tag> tags;
     private List<String> imageUrls;
-//    private GifData gifData;
+    private GifData gifData;
 //    private PixivClient.From from;
 
     private JSONObject origJson;
@@ -81,6 +24,75 @@ public class PixivArtwork {
     private PixivUser author;
 
     public boolean isBookmarked() {
-        return bookmarkData != null;
+        return origData.bookmarkData != null;
+    }
+
+    public boolean isGif() {
+        return origData.illustType == 2;
+    }
+
+    public record Tag(String orig, String trans) {
+    }
+
+    @Data
+    public static class OrigData {
+        @JSONField(name = "id")
+        String id;
+        @JSONField(name = "title")
+        String title;
+        @JSONField(name = "illustType")
+        int illustType;
+        @JSONField(name = "xRestrict")
+        int xRestrict;
+        @JSONField(name = "restrict")
+        int restrict;
+        @JSONField(name = "sl")
+        int sl;
+        @JSONField(name = "url")
+        String url;
+        @JSONField(name = "description")
+        String description;
+        @JSONField(name = "tags")
+        JSONArray originalTags;
+        @JSONField(name = "userId")
+        String userId;
+        @JSONField(name = "userName")
+        String userName;
+        @JSONField(name = "width")
+        int width;
+        @JSONField(name = "height")
+        int height;
+        @JSONField(name = "pageCount")
+        int pageCount;
+        @JSONField(name = "isBookmarkable")
+        boolean bookmarkable;
+        @JSONField(name = "bookmarkData")
+        JSONObject bookmarkData;
+        @JSONField(name = "alt")
+        String alt;
+        @JSONField(name = "titleCaptionTranslation")
+        JSONObject titleCaptionTranslation;
+        @JSONField(name = "createDate")
+        String createDate;
+        @JSONField(name = "updateDate")
+        String updateDate;
+        @JSONField(name = "isUnlisted")
+        boolean unlisted;
+        @JSONField(name = "isMasked")
+        boolean masked;
+        @JSONField(name = "urls")
+        JSONObject urls;
+        @JSONField(name = "profileImageUrl")
+        String profileImageUrl;
+        @JSONField(name = "aiType")
+        int aiType;
+        @JSONField(name = "bookmarkCount")
+        int bookmarkCount;
+        @JSONField(name = "likeCount")
+        int likeCount;
+        @JSONField(name = "viewCount")
+        int viewCount;
+        @JSONField(name = "likeData")
+        boolean liked;
     }
 }
