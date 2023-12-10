@@ -54,7 +54,7 @@
                         </HBox>
                         <Label text="作品id:" />
                         <TextField fx:id="idField" />
-                        <Button fx:id="openArtworkBtn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#openArtworkBtnOnAction" text="打开" VBox.vgrow="ALWAYS" />
+                        <Button fx:id="openArtworkBtn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#openArtworkBtnOnAction" text="打开" VBox.vgrow="ALWAYS" disable="true" />
                         <HBox alignment="CENTER_RIGHT">
                            <children>
                               <Button mnemonicParsing="false" onAction="#save" text="保存" />

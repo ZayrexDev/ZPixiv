@@ -4,7 +4,6 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.annotation.JSONField;
 import lombok.Data;
-import xyz.zcraft.zpixiv.api.PixivClient;
 import xyz.zcraft.zpixiv.api.user.PixivUser;
 
 import java.util.List;
@@ -43,7 +42,7 @@ public class PixivArtwork {
     @JSONField(name = "isBookmarkable")
     private boolean bookmarkable;
     @JSONField(name = "bookmarkData")
-    private Object bookmarkData;
+    private JSONObject bookmarkData;
     @JSONField(name = "alt")
     private String alt;
     @JSONField(name = "titleCaptionTranslation")
@@ -66,8 +65,9 @@ public class PixivArtwork {
     private int bookmarkCount;
     @JSONField(name = "likeCount")
     private int likeCount;
+    @JSONField(name = "likeData")
+    private boolean liked;
 
-    private boolean errorOccurred = false;
     private Set<String> translatedTags;
     private List<String> imageUrls;
 //    private GifData gifData;

@@ -1,11 +1,19 @@
 package xyz.zcraft.zpixiv.ui.util;
 
-import javax.net.ssl.*;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.security.SecureRandom;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
+@SuppressWarnings("ALL")
 public class SSLUtil {
+    public static void ignoreSsl() throws Exception {
+        trustAllHttpsCertificates();
+        trustEveryone();
+    }
+
     private static void trustAllHttpsCertificates() throws Exception {
         TrustManager[] trustAllCerts = new TrustManager[1];
         TrustManager tm = new miTM();
@@ -13,13 +21,6 @@ public class SSLUtil {
         SSLContext sc = SSLContext.getInstance("SSL");
         sc.init(null, trustAllCerts, null);
         HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-    }
-
-    public static void ignoreSsl() throws Exception {
-        HostnameVerifier hv = (urlHostName, session) -> true;
-        trustAllHttpsCertificates();
-        HttpsURLConnection.setDefaultHostnameVerifier(hv);
-        trustEveryone();
     }
 
     private static void trustEveryone() {

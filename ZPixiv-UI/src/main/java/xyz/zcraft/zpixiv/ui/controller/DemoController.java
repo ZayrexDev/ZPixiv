@@ -23,6 +23,7 @@ import java.net.Proxy;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Properties;
 import java.util.ResourceBundle;
 
 public class DemoController implements Initializable {
@@ -79,38 +80,30 @@ public class DemoController implements Initializable {
     }
 
     public void save() {
-        final Path conf = Path.of("cache.conf");
-        StringBuilder sb = new StringBuilder();
-        sb.append("cookie=").append(cookieField.getText().split("=")[1]).append(";");
-        sb.append("proxyHost=").append(proxyHostField.getText()).append(";");
-        sb.append("proxyPort=").append(proxyPortField.getText()).append(";");
-        sb.append("id=").append(idField.getText()).append(";");
         try {
-            Files.writeString(conf, sb.toString());
+            Properties properties = new Properties();
+            properties.put("cookie", cookieField.getText());
+            properties.put("proxyHost", proxyHostField.getText());
+            properties.put("proxyPort", proxyPortField.getText());
+            properties.put("id", idField.getText());
+            properties.store(Files.newOutputStream(Path.of("config.prop")), "ZPixiv Demo");
         } catch (IOException e) {
             LOG.error(e);
         }
     }
 
     public void read() {
-        final Path conf = Path.of("cache.conf");
-        if (Files.exists(conf)) {
-            final String s;
-            try {
-                s = Files.readString(conf);
-                final String[] split = s.split(";");
-                for (String string : split) {
-                    final String[] split1 = string.split("=");
-                    switch (split1[0]) {
-                        case "cookie" -> cookieField.setText("PHPSESSID=" + split1[1]);
-                        case "proxyHost" -> proxyHostField.setText(split1[1]);
-                        case "proxyPort" -> proxyPortField.setText(split1[1]);
-                        case "id" -> idField.setText(split1[1]);
-                    }
-                }
-            } catch (IOException e) {
-                LOG.error(e);
-            }
+        final Path configPath = Path.of("config.prop");
+        if (!Files.exists(configPath)) return;
+        try {
+            final Properties properties = new Properties();
+            properties.load(Files.newInputStream(configPath));
+            cookieField.setText(properties.getProperty("cookie"));
+            proxyHostField.setText(properties.getProperty("proxyHost"));
+            proxyPortField.setText(properties.getProperty("proxyPort"));
+            idField.setText(properties.getProperty("id"));
+        } catch (IOException e) {
+            LOG.error(e);
         }
     }
 
@@ -130,6 +123,7 @@ public class DemoController implements Initializable {
                     } else {
                         proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHostField.getText(), Integer.parseInt(proxyPortField.getText())));
                     }
+                    SSLUtil.ignoreSsl();
                     this.client = new PixivClient(cookieField.getText(), proxy, true);
                     Platform.runLater(() -> {
                         userNameLbl.setText("已登录: " + client.getUserData().getName());

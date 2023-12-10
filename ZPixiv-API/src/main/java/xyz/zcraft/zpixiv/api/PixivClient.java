@@ -174,6 +174,41 @@ public class PixivClient {
     }
 
     public boolean addBookmark(PixivArtwork artwork) throws IOException {
+        LOG.info("Adding like to {}", artwork.getId());
+        final JSONObject obj = new JSONObject();
+        obj.put("illust_id", artwork.getId());
+
+        final String requestBody = obj.toString();
+
+        Connection c = Jsoup.connect(Urls.LIKE)
+                .ignoreContentType(true)
+                .method(Connection.Method.POST)
+                .cookies(cookie)
+                .timeout(10 * 1000)
+                .userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36")
+                .header("Accept", "application/json")
+                .header("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6")
+                .header("Content-Type", "application/json; charset=utf-8")
+                .header("Origin", "https://www.pixiv.net")
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0")
+                .header("Content-Length", String.valueOf(requestBody.length()))
+                .header("X-Csrf-Token", userData.getToken())
+                .requestBody(requestBody);
+        setConnectionProxy(c);
+
+        final JSONObject response = JSONObject.parseObject(new String(c.execute().body().getBytes(StandardCharsets.UTF_8)));
+        if (!response.getBoolean("error")) {
+            final JSONObject bmData = new JSONObject();
+            bmData.put("id", response.getJSONObject("body").getString("last_bookmark_id"));
+            bmData.put("private", false);
+            artwork.setBookmarkData(bmData);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean likeArtwork(PixivArtwork artwork) throws IOException {
         LOG.info("Adding bm to {}", artwork.getId());
         final JSONObject obj = new JSONObject();
         obj.put("illust_id", artwork.getId());
@@ -189,21 +224,21 @@ public class PixivClient {
                 .cookies(cookie)
                 .timeout(10 * 1000)
                 .userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36")
-                .header("Accept","application/json")
-                .header("Accept-Language","zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6")
-                .header("Content-Type","application/json; charset=utf-8")
-                .header("Origin","https://www.pixiv.net")
-                .header("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0")
+                .header("Accept", "application/json")
+                .header("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6")
+                .header("Content-Type", "application/json; charset=utf-8")
+                .header("Origin", "https://www.pixiv.net")
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0")
                 .header("Content-Length", String.valueOf(requestBody.length()))
                 .header("X-Csrf-Token", userData.getToken())
                 .requestBody(requestBody);
         setConnectionProxy(c);
 
-        final Connection.Response execute = c.execute();
-        String responseStr = execute.body();
-        responseStr = new String(responseStr.getBytes(StandardCharsets.UTF_8));
-        final JSONObject response = JSONObject.parseObject(responseStr);
-        return !response.getBoolean("error");
+        final JSONObject response = JSONObject.parseObject(new String(c.execute().body().getBytes(StandardCharsets.UTF_8)));
+        if (!response.getBoolean("error")) {
+            artwork.setLiked(true);
+            return true;
+        } else return false;
     }
 
 //    public static List<String> buildQueryString(Set<String> ids) {
@@ -609,6 +644,7 @@ public class PixivClient {
     public static class Urls {
         static final String TOP = "https://www.pixiv.net/ajax/top/illust?mode=all";
         static final String ADD_BOOKMARK = "https://www.pixiv.net/ajax/illusts/bookmarks/add";
+        static final String LIKE = "https://www.pixiv.net/ajax/illusts/like";
         static final String RELATED = "https://www.pixiv.net/ajax/illust/%s/recommend/init?limit=%d";
         static final String ARTWORK = "https://www.pixiv.net/artworks/";
         static final String USER = "https://www.pixiv.net/ajax/user/%s/profile/all?";
