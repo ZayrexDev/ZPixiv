@@ -8,6 +8,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
@@ -86,13 +87,17 @@ public class ArtworkController implements Initializable, Refreshable {
     public Label likeTextLbl;
     @FXML
     public Label pageLbl;
+    public AnchorPane pageWrapperPane;
     private PixivClient client;
     private PixivArtwork artwork;
     private LoadTask currentTask = null;
-    private final LinkedList<Image> images = new LinkedList<>();
-    private int currentIndex;
+    private Image[] images;
+    private int currentIndex = 1;
+    private FadeTransition pageWrapperPaneFadeOutTransition;
+    private FadeTransition pageWrapperPaneFadeInTransition;
+    private Image previewImg;
 
-    private static FadeTransition getFadeTransition(Node node) {
+    private static FadeTransition getFadeOutTransition(Node node) {
         FadeTransition f = new FadeTransition();
         f.setNode(node);
         f.setDuration(Duration.millis(300));
@@ -112,26 +117,28 @@ public class ArtworkController implements Initializable, Refreshable {
     }
 
     public void nextPageBtnOnAction() {
-        if (artwork.getPageCount() >= currentIndex + 1) {
+        if (currentIndex + 1 >= artwork.getPageCount()) {
             currentIndex++;
-            nextPageBtn.setDisable(true);
-            prevPageBtn.setDisable(currentIndex <= 1);
+            updateImageIndex();
+        }
+    }
+
+    public void prevPageBtnOnAction() {
+        if (currentIndex <= 2) {
+            currentIndex--;
             updateImageIndex();
         }
     }
 
     private void updateImageIndex() {
         pageLbl.setText(currentIndex + "/" + artwork.getPageCount());
-        imgView.setImage(images.get(currentIndex));
-    }
-
-    public void prevPageBtnOnAction() {
-        if (currentIndex <= 2) {
-            currentIndex--;
-            prevPageBtn.setDisable(true);
-            nextPageBtn.setDisable(artwork.getPageCount() >= currentIndex);
-            updateImageIndex();
+        if(currentIndex == 1 && images[0] == null) {
+            imgView.setImage(previewImg);
+        } else {
+            imgView.setImage(images[currentIndex - 1]);
         }
+        nextPageBtn.setDisable(currentIndex >= artwork.getPageCount());
+        prevPageBtn.setDisable(currentIndex <= 1);
     }
 
     public void followBtnOnAction() {
@@ -146,9 +153,9 @@ public class ArtworkController implements Initializable, Refreshable {
             Platform.runLater(() -> {
                 fadeInTransition.playFromStart();
                 loadPane.setVisible(true);
-                System.out.println("YES");
             });
         }
+        refreshTasks();
     }
 
     private void refreshTasks() {
@@ -161,17 +168,17 @@ public class ArtworkController implements Initializable, Refreshable {
             }
         } else {
             if (tasks.isEmpty() || tasks.getFirst() == null) {
-                Platform.runLater(() -> getFadeTransition(loadPane).playFromStart());
+                Platform.runLater(() -> getFadeOutTransition(loadPane).playFromStart());
                 return;
             } else {
                 currentTask = tasks.removeFirst();
-
                 if (currentTask.isFinished() || currentTask.isFailed()) {
                     currentTask = null;
                     refreshTasks();
                 } else {
                     Platform.runLater(() -> {
                         processLabel.setText(currentTask.getName());
+                        loadProgressBar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
                         currentTask.addListener((v) -> Platform.runLater(() -> loadProgressBar.setProgress(v)));
                     });
                 }
@@ -191,11 +198,16 @@ public class ArtworkController implements Initializable, Refreshable {
         imgView.fitWidthProperty().bind(((HBox) imgView.getParent()).widthProperty());
         imgView.fitHeightProperty().bind(((HBox) imgView.getParent()).heightProperty());
         loadPane.setVisible(false);
+        pageWrapperPane.setVisible(false);
 
         Rectangle r = new Rectangle(authorImg.getFitWidth(), authorImg.getFitHeight());
         r.setArcWidth(authorImg.getFitWidth());
         r.setArcHeight(authorImg.getFitHeight());
         authorImg.setClip(r);
+
+        pageWrapperPaneFadeOutTransition = getFadeOutTransition(pageWrapperPane);
+        pageWrapperPaneFadeOutTransition.setOnFinished(actionEvent -> pageWrapperPane.setVisible(false));
+        pageWrapperPaneFadeInTransition = getFadeInTransition(pageWrapperPane);
     }
 
     public void load(PixivClient client, PixivArtwork artwork) {
@@ -227,11 +239,19 @@ public class ArtworkController implements Initializable, Refreshable {
 
         likeLbl.setText(String.valueOf(artwork.getLikeCount()));
         bookmarkLbl.setText(String.valueOf(artwork.getBookmarkCount()));
+        viewLbl.setText(String.valueOf(artwork.getViewCount()));
 
-        if(artwork.getPageCount() <= 1) pageLbl.setVisible(false);
+        images = new Image[artwork.getPageCount()];
 
-//        img.setFitWidth(artwork.getWidth());
-//        img.setFitHeight(artwork.getHeight());
+        if (artwork.getPageCount() <= 1) {
+            pageWrapperPane.setVisible(false);
+            pageLbl.setVisible(false);
+        } else {
+            prevPageBtn.setDisable(true);
+            nextPageBtn.setDisable(artwork.getPageCount() == 1);
+            pageLbl.setText("1/" + artwork.getPageCount());
+        }
+
 
         loadProgressBar.setProgress(ProgressBar.INDETERMINATE_PROGRESS);
 
@@ -249,7 +269,6 @@ public class ArtworkController implements Initializable, Refreshable {
             try {
                 client.getFullPages(artwork);
 
-                final Image image;
                 URL url = new URL(artwork.getUrls().getString("small"));
                 URLConnection c;
 
@@ -276,12 +295,9 @@ public class ArtworkController implements Initializable, Refreshable {
                 o.close();
                 b.close();
 
-                image = new Image(tempFile.toFile().toURI().toURL().toString(), true);
+                previewImg = new Image(tempFile.toFile().toURI().toURL().toString(), true);
                 t.setFinished(true);
-                Platform.runLater(() -> {
-                    if (imgView.getImage() != null) return;
-                    imgView.setImage(image);
-                });
+                updateImageIndex();
                 LOG.info("Preview image loaded");
             } catch (IOException e) {
                 LOG.error("Exception in loading preview image", e);
@@ -299,11 +315,13 @@ public class ArtworkController implements Initializable, Refreshable {
             while (tries >= 0) {
                 try {
                     client.getFullPages(artwork);
+                    LOG.info("Got {} pages for artwork {}", artwork.getPageCount(), artwork.getId());
                     for (int i = 1; i <= artwork.getPageCount(); i++) {
-                        int finalI = i;
-                        Main.getTpe().submit(() -> getImagePageLoadRunnable(finalI));
+                        Main.getTpe().submit(getImagePageLoadRunnable(i));
                     }
                     t.setFinished(true);
+
+                    return;
                 } catch (IOException e) {
                     tries--;
                     LOG.error("Exception in loading image pages", e);
@@ -318,6 +336,7 @@ public class ArtworkController implements Initializable, Refreshable {
 
     private Runnable getImagePageLoadRunnable(int index) {
         return () -> {
+            LOG.info("Loading page {} for artwork {}", index, artwork.getId());
             final LoadTask t = new LoadTask("获取作品(" + index + ")");
             postLoadTask(t);
             int tries = 3;
@@ -350,12 +369,14 @@ public class ArtworkController implements Initializable, Refreshable {
                     o.close();
                     b.close();
 
-                    final Image image = new Image(tempFile.toFile().toURI().toURL().toString(), true);
+                    final Image image = new Image(tempFile.toFile().toURI().toURL().toString());
 
-                    images.set(index - 1, image);
+                    images[index - 1] = image;
+
+                    updateImageIndex();
 
                     t.setFinished(true);
-                    LOG.info("Image loaded");
+                    LOG.info("Page {} for artwork {} loaded", index, artwork.getId());
                     return;
                 } catch (IOException e) {
                     LOG.error("Failed to get page " + index, e);
@@ -462,11 +483,18 @@ public class ArtworkController implements Initializable, Refreshable {
     }
 
     public void hidePageWrapper() {
+        if (artwork.getPageCount() <= 1) return;
 
+        pageWrapperPaneFadeInTransition.stop();
+        pageWrapperPaneFadeOutTransition.playFromStart();
     }
 
     public void showPageWrapper() {
+        if (artwork.getPageCount() <= 1) return;
 
+        pageWrapperPaneFadeOutTransition.stop();
+        pageWrapperPaneFadeInTransition.playFromStart();
+        pageWrapperPane.setVisible(true);
     }
 
     @SuppressWarnings("unused")
@@ -509,6 +537,16 @@ final class LoadTask {
     }
 
     private void fireChanged() {
-        changeListeners.forEach(e -> e.accept(progress));
+        Main.getTpe().submit(() -> changeListeners.forEach(e -> e.accept(progress)));
+    }
+
+    @Override
+    public String toString() {
+        return "LoadTask{" +
+               "name='" + name + '\'' +
+               ", progress=" + progress +
+               ", failed=" + failed +
+               ", finished=" + finished +
+               '}';
     }
 }

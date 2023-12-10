@@ -26,27 +26,6 @@ public class PixivClient {
     @Setter
     private Proxy proxy;
 
-    public PixivClient(String cookieString, Proxy proxy) throws IOException {
-        cookie = parseCookie(cookieString);
-        this.proxy = proxy;
-        Connection c = Jsoup.connect("https://www.pixiv.net").ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-        setConnectionProxy(c);
-        String text = Objects.requireNonNull(c.get().getElementById("meta-global-data")).attr("content");
-        final JSONObject jsonObject = JSONObject.parseObject(text);
-        JSONObject userDataJson = jsonObject.getJSONObject("userData");
-
-        if (userDataJson == null) userData = null;
-        else {
-            PixivUser userData = userDataJson.to(PixivUser.class);
-            userData.setToken(jsonObject.getString("token"));
-            if (userData.getName() != null && userData.getId() != null) {
-                this.userData = userData;
-            } else {
-                throw new RuntimeException("Can't login");
-            }
-        }
-    }
-
     public PixivClient(String cookieString, Proxy proxy, boolean getUserData) throws IOException {
         cookie = parseCookie(cookieString);
         this.proxy = proxy;
@@ -70,36 +49,6 @@ public class PixivClient {
         } else {
             userData = null;
         }
-    }
-
-    public PixivClient(String cookieString) throws IOException {
-        cookie = parseCookie(cookieString);
-        Connection c = Jsoup.connect("https://www.pixiv.net").ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
-        setConnectionProxy(c);
-        String text = Objects.requireNonNull(c.get().getElementById("meta-global-data")).attr("content");
-        final JSONObject jsonObject = JSONObject.parseObject(text);
-        JSONObject userDataJson = jsonObject.getJSONObject("userData");
-
-        if (userDataJson == null) userData = null;
-        else {
-            PixivUser userData = userDataJson.to(PixivUser.class);
-            userData.setToken(jsonObject.getString("token"));
-            if (userData.getName() != null && userData.getId() != null) {
-                this.userData = userData;
-            } else {
-                throw new RuntimeException("Can't login");
-            }
-        }
-    }
-
-    public PixivClient(Proxy proxy) throws IOException {
-        this();
-        this.proxy = proxy;
-    }
-
-    public PixivClient() {
-        this.userData = null;
-        this.cookie = new HashMap<>();
     }
 
     public static HashMap<String, String> parseCookie(String cookieString) {
@@ -173,7 +122,7 @@ public class PixivClient {
         return pixivArtwork;
     }
 
-    public boolean addBookmark(PixivArtwork artwork) throws IOException {
+    public boolean likeArtwork(PixivArtwork artwork) throws IOException {
         LOG.info("Adding like to {}", artwork.getId());
         final JSONObject obj = new JSONObject();
         obj.put("illust_id", artwork.getId());
@@ -198,17 +147,14 @@ public class PixivClient {
 
         final JSONObject response = JSONObject.parseObject(new String(c.execute().body().getBytes(StandardCharsets.UTF_8)));
         if (!response.getBoolean("error")) {
-            final JSONObject bmData = new JSONObject();
-            bmData.put("id", response.getJSONObject("body").getString("last_bookmark_id"));
-            bmData.put("private", false);
-            artwork.setBookmarkData(bmData);
+            artwork.setLiked(true);
             return true;
         } else {
             return false;
         }
     }
 
-    public boolean likeArtwork(PixivArtwork artwork) throws IOException {
+    public boolean addBookmark(PixivArtwork artwork) throws IOException {
         LOG.info("Adding bm to {}", artwork.getId());
         final JSONObject obj = new JSONObject();
         obj.put("illust_id", artwork.getId());
@@ -236,7 +182,10 @@ public class PixivClient {
 
         final JSONObject response = JSONObject.parseObject(new String(c.execute().body().getBytes(StandardCharsets.UTF_8)));
         if (!response.getBoolean("error")) {
-            artwork.setLiked(true);
+            final JSONObject bmData = new JSONObject();
+            bmData.put("id", response.getJSONObject("body").getString("last_bookmark_id"));
+            bmData.put("private", false);
+            artwork.setBookmarkData(bmData);
             return true;
         } else return false;
     }

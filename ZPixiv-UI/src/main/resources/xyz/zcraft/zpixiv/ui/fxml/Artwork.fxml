@@ -38,8 +38,20 @@
                               <ImageView fx:id="imgView" fitHeight="200.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
                            </children>
                         </HBox>
-                        <Button fx:id="nextPageBtn" mnemonicParsing="false" onAction="#nextPageBtnOnAction" text="&gt;" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
-                        <Button fx:id="prevPageBtn" mnemonicParsing="false" onAction="#prevPageBtnOnAction" text="&lt;" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                        <AnchorPane fx:id="pageWrapperPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                           <children>
+                              <VBox alignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <children>
+                                    <Button id="prevPageBtn" fx:id="prevPageBtn" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#prevPageBtnOnAction" prefHeight="20.0" prefWidth="20.0" styleClass="pageWrapper" text="&lt;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                                 </children>
+                              </VBox>
+                              <VBox alignment="CENTER" layoutX="316.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <children>
+                                    <Button id="nextPageBtn" fx:id="nextPageBtn" layoutX="311.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#nextPageBtnOnAction" prefHeight="20.0" prefWidth="20.0" styleClass="pageWrapper" AnchorPane.rightAnchor="0.0" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
                         <Label fx:id="pageLbl" text="0/0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0">
                            <padding>
                               <Insets bottom="2.0" left="5.0" right="5.0" top="2.0" />
@@ -112,7 +124,7 @@
             </HBox>
             <VBox>
                <children>
-                  <HBox fx:id="titleBox" spacing="5.0">
+                  <HBox fx:id="titleBox" alignment="CENTER_LEFT" spacing="5.0">
                      <children>
                         <Label maxHeight="17.0" maxWidth="32.0" minHeight="17.0" minWidth="32.0" prefHeight="17.0" prefWidth="32.0" style="-fx-background-color: #FF4060; -fx-background-radius: 3;" text="R-18" textFill="WHITE" visible="false" fx:id="xResLbl">
                            <padding>

@@ -65,6 +65,8 @@ public class PixivArtwork {
     private int bookmarkCount;
     @JSONField(name = "likeCount")
     private int likeCount;
+    @JSONField(name = "viewCount")
+    private int viewCount;
     @JSONField(name = "likeData")
     private boolean liked;
 
