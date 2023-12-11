@@ -12,7 +12,8 @@
 <?import javafx.scene.layout.VBox?>
 
 <!--suppress JavaFxDefaultTag -->
-<AnchorPane fx:id="main" minHeight="300.0" minWidth="500.0" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.MainController">
+
+<AnchorPane fx:id="main" minHeight="300.0" minWidth="500.0" stylesheets="@../css/main.css" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.MainController">
    <children>
       <HBox layoutY="2.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
           <children>
@@ -26,9 +27,9 @@
                   <Separator prefWidth="200.0" />
                   <VBox alignment="TOP_CENTER" spacing="5.0" VBox.vgrow="ALWAYS">
                      <children>
-                        <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#menuBtnOnAction" text="🏠" VBox.vgrow="ALWAYS" />
-                        <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#discBtnOnAction" text="🌏" VBox.vgrow="ALWAYS" />
-                        <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#folBtnOnAction" text="🔔" VBox.vgrow="ALWAYS" />
+                        <Button id="homeBtn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#menuBtnOnAction" styleClass="svgBtn" text="🏠" VBox.vgrow="ALWAYS" />
+                        <Button id="discBtn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#discBtnOnAction" styleClass="svgBtn" text="🌏" VBox.vgrow="ALWAYS" />
+                        <Button id="followedBtn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#folBtnOnAction" styleClass="svgBtn" text="🔔" VBox.vgrow="ALWAYS" />
                      </children>
                      <VBox.margin>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -36,12 +37,12 @@
                   </VBox>
                   <VBox spacing="5.0">
                      <children>
-                        <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#setBtnOnAction" text="⚙" VBox.vgrow="ALWAYS">
+                        <Button id="settingsBtn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#setBtnOnAction" styleClass="svgBtn" text="⚙" VBox.vgrow="ALWAYS">
                            <VBox.margin>
                               <Insets top="5.0" />
                            </VBox.margin>
                         </Button>
-                        <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#aboutBtnOnAction" text="ℹ" VBox.vgrow="ALWAYS" />
+                        <Button id="aboutBtn" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#aboutBtnOnAction" styleClass="svgBtn" text="ℹ" VBox.vgrow="ALWAYS" />
                      </children>
                      <VBox.margin>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -66,14 +67,14 @@
                         </HBox>
                         <HBox alignment="CENTER" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="0.0">
                            <children>
-                              <Button mnemonicParsing="false" onAction="#minBtnOnAction" text="-" />
-                              <Button mnemonicParsing="false" onAction="#exitBtnOnAction" text="x" />
+                              <Button id="miniBtn" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" onAction="#minBtnOnAction" prefHeight="25.0" prefWidth="25.0" styleClass="svgBtn" text="-" />
+                              <Button id="exitBtn" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" onAction="#exitBtnOnAction" prefHeight="25.0" prefWidth="25.0" styleClass="svgBtn" text="x" />
                            </children>
                         </HBox>
                         <HBox alignment="CENTER" layoutX="10.0" layoutY="10.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
                            <children>
-                              <Button fx:id="closePageBtn" disable="true" mnemonicParsing="false" onAction="#closePageBtnOnAction" text="x" />
-                              <Button fx:id="refreshBtn" disable="true" mnemonicParsing="false" onAction="#refreshBtnOnAction" text="↻" />
+                              <Button id="closeBtn" fx:id="closePageBtn" disable="true" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" onAction="#closePageBtnOnAction" prefHeight="25.0" prefWidth="25.0" styleClass="svgBtn" text="x" />
+                              <Button id="refreshBtn" fx:id="refreshBtn" disable="true" maxHeight="25.0" maxWidth="25.0" minHeight="25.0" minWidth="25.0" mnemonicParsing="false" onAction="#refreshBtnOnAction" prefHeight="25.0" prefWidth="25.0" styleClass="svgBtn" text="↻" />
                            </children>
                         </HBox>
                      </children>

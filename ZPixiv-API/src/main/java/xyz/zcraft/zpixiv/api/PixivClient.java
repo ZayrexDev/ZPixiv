@@ -66,6 +66,17 @@ public class PixivClient {
         return cookieMap;
     }
 
+    public void followUser(PixivUser user) throws IOException {
+        final var c = getConnection(Urls.FOLLOW_USER, Connection.Method.POST);
+
+        String requestBuilder = "mode=add&type=user&user_id=" +
+                user.getId() +
+                "&tag=&restrict=0&format=json";
+        c.requestBody(requestBuilder);
+
+        c.post();
+    }
+
     public static String getArtworkPageUrl(String id) {
         return Urls.ARTWORK + id;
     }
@@ -603,6 +614,7 @@ public class PixivClient {
         public static final String REFERER = "https://www.pixiv.net/";
         public static final String TOP = "https://www.pixiv.net/ajax/top/illust?mode=all";
         public static final String ADD_BOOKMARK = "https://www.pixiv.net/ajax/illusts/bookmarks/add";
+        public static final String FOLLOW_USER = "https://www.pixiv.net/bookmark_add.php";
         public static final String LIKE = "https://www.pixiv.net/ajax/illusts/like";
         public static final String RELATED = "https://www.pixiv.net/ajax/illust/%s/recommend/init?limit=%d";
         public static final String ARTWORK = "https://www.pixiv.net/artworks/";

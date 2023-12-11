@@ -116,14 +116,14 @@ public class ArtworkController implements Initializable, Refreshable {
     }
 
     public void nextPageBtnOnAction() {
-        if (currentIndex + 1 >= artwork.getOrigData().getPageCount()) {
+        if (currentIndex + 1 <= artwork.getOrigData().getPageCount()) {
             currentIndex++;
             updateImageIndex();
         }
     }
 
     public void prevPageBtnOnAction() {
-        if (currentIndex <= 2) {
+        if (currentIndex >= 2) {
             currentIndex--;
             updateImageIndex();
         }
