@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!--suppress JavaFxDefaultTag -->
+
+<AnchorPane fx:id="main" minHeight="400.0" minWidth="600.0" stylesheets="@../css/main.css" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.MainController">
+   <children>
+      <HBox layoutY="2.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+          <children>
+              <VBox id="side-bar" maxHeight="1.7976931348623157E308" maxWidth="50.0" minWidth="50.0" prefHeight="400.0" prefWidth="50.0" HBox.hgrow="NEVER">
+               <children>
+                  <ImageView fitHeight="40.0" fitWidth="40.0" onKeyPressed="#profileBtnOnAction" pickOnBounds="true" preserveRatio="true">
+                     <VBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </VBox.margin>
+                  </ImageView>
+                  <Separator prefWidth="200.0" />
+                  <VBox alignment="TOP_CENTER" spacing="5.0" VBox.vgrow="ALWAYS">
+                     <children>
+                        <HBox alignment="TOP_CENTER" maxHeight="22.0" minHeight="22.0" prefHeight="22.0" styleClass="svgBtn">
+                           <children>
+                              <Region id="homeBtn" maxHeight="18.0" maxWidth="20.0" minHeight="18.0" minWidth="20.0" prefHeight="18.0" prefWidth="20.0" styleClass="svgBtnImg" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="TOP_CENTER" maxHeight="22.0" minHeight="22.0" prefHeight="22.0" styleClass="svgBtn">
+                           <children>
+                              <Region id="discBtn" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" prefHeight="20.0" prefWidth="20.0" styleClass="svgBtnImg" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="TOP_CENTER" maxHeight="22.0" minHeight="22.0" prefHeight="22.0" styleClass="svgBtn">
+                           <children>
+                              <Region id="followedBtn" maxHeight="22.0" maxWidth="22.0" minHeight="22.0" minWidth="22.0" prefHeight="22.0" prefWidth="22.0" styleClass="svgBtnImg" />
+                           </children>
+                        </HBox>
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </VBox.margin>
+                  </VBox>
+                  <VBox spacing="5.0">
+                     <children>
+                        <HBox alignment="CENTER" maxHeight="22.0" minHeight="22.0" prefHeight="22.0" styleClass="svgBtn">
+                           <children>
+                              <Region id="settingsBtn" maxHeight="20.0" maxWidth="22.0" minHeight="20.0" minWidth="22.0" prefHeight="20.0" prefWidth="22.0" styleClass="svgBtnImg" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER" maxHeight="22.0" minHeight="22.0" prefHeight="22.0" styleClass="svgBtn">
+                           <children>
+                              <Region id="aboutBtn" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" prefHeight="20.0" prefWidth="20.0" styleClass="svgBtnImg" />
+                           </children>
+                        </HBox>
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </VBox.margin>
+                  </VBox>
+               </children>
+               <HBox.margin>
+                  <Insets />
+               </HBox.margin>
+            </VBox>
+              <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+               <children>
+                  <AnchorPane id="top-bar" maxHeight="25.0" minHeight="25.0" onMouseDragged="#titleBarDragged" onMousePressed="#titleBarPressed" prefHeight="25.0">
+                     <children>
+                        <HBox alignment="CENTER" maxHeight="25.0" minHeight="25.0" prefHeight="25.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                           <children>
+                              <TextField id="search-bar" fx:id="topSearchBar" alignment="CENTER" prefWidth="300.0" promptText="搜索" />
+                           </children>
+                           <padding>
+                              <Insets bottom="4.0" left="2.0" right="2.0" top="4.0" />
+                           </padding>
+                        </HBox>
+                        <HBox alignment="CENTER" maxHeight="22.0" minHeight="22.0" prefHeight="22.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="0.0">
+                           <children>
+                              <VBox alignment="CENTER" maxWidth="20.0" minWidth="20.0" prefWidth="20.0" styleClass="svgBtn">
+                                 <children>
+                                    <Region id="miniBtn" maxHeight="18.0" maxWidth="18.0" minHeight="18.0" minWidth="18.0" prefHeight="18.0" prefWidth="18.0" styleClass="svgBtnImg" />
+                                 </children>
+                              </VBox>
+                              <VBox alignment="CENTER" maxWidth="20.0" minWidth="20.0" prefWidth="20.0" styleClass="svgBtn">
+                                 <children>
+                                    <Region id="exitBtn" maxHeight="16.0" maxWidth="16.0" minHeight="16.0" minWidth="16.0" onMousePressed="#exitBtnOnAction" prefHeight="16.0" prefWidth="16.0" styleClass="svgBtnImg" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER" layoutX="10.0" layoutY="10.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+                           <children>
+                              <VBox fx:id="closePageBtn" alignment="CENTER" maxWidth="20.0" minWidth="20.0" prefWidth="20.0" styleClass="svgBtn">
+                                 <children>
+                                    <Region id="closeBtn" maxHeight="16.0" maxWidth="16.0" minHeight="16.0" minWidth="16.0" onMousePressed="#closePageBtnOnAction" prefHeight="16.0" prefWidth="16.0" styleClass="svgBtnImg" />
+                                 </children>
+                              </VBox>
+                              <VBox fx:id="refreshBtn" alignment="CENTER" maxWidth="20.0" minWidth="20.0" prefWidth="20.0" styleClass="svgBtn">
+                                 <children>
+                                    <Region id="refreshBtn" maxHeight="16.0" maxWidth="16.0" minHeight="16.0" minWidth="16.0" onMousePressed="#refreshBtnOnAction" prefHeight="16.0" prefWidth="16.0" styleClass="svgBtnImg" />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </HBox>
+                     </children>
+                     <VBox.margin>
+                        <Insets />
+                     </VBox.margin>
+                  </AnchorPane>
+                  <AnchorPane fx:id="contentPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
+               </children>
+            </VBox>
+          </children>
+      </HBox>
+      <VBox fx:id="msgPane" alignment="BOTTOM_RIGHT" maxHeight="1.7976931348623157E308" spacing="20.0" AnchorPane.bottomAnchor="20.0" AnchorPane.rightAnchor="0.0" />
+      <Region onMouseDragged="#resizeS" onMousePressed="#resizeStart" prefHeight="5.0" style="-fx-background-color: transparent;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="5.0">
+         <cursor>
+            <Cursor fx:constant="S_RESIZE" />
+         </cursor>
+      </Region>
+      <Region onMouseDragged="#resizeSE" onMousePressed="#resizeStart" prefHeight="5.0" prefWidth="5.0" style="-fx-background-color: transparent;" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0">
+         <cursor>
+            <Cursor fx:constant="SE_RESIZE" />
+         </cursor>
+      </Region>
+      <Region onMouseDragged="#resizeE" onMousePressed="#resizeStart" prefWidth="5.0" style="-fx-background-color: transparent;" AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <cursor>
+            <Cursor fx:constant="E_RESIZE" />
+         </cursor>
+      </Region>
+   </children>
+</AnchorPane>
