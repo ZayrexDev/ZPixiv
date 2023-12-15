@@ -332,6 +332,7 @@ public class ArtworkController implements Initializable, Refreshable {
                     Platform.runLater(() -> imgView.setImage(image));
 
                     t1.setFinished(true);
+                    return;
                 } catch (IOException e) {
                     LOG.error("Can't load gif data", e);
                 }
@@ -621,7 +622,7 @@ public class ArtworkController implements Initializable, Refreshable {
 
         String ext;
 
-        if(artwork.getOrigData().getIllustType() != 2) {
+        if (artwork.getOrigData().getIllustType() != 2) {
             ext = artwork.getImageUrls().get(0).substring(artwork.getImageUrls().get(0).lastIndexOf('.'));
         } else {
             ext = ".gif";

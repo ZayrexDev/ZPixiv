@@ -23,6 +23,7 @@ import java.net.Proxy;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.ResourceBundle;
 
@@ -125,10 +126,7 @@ public class DemoController implements Initializable {
                     }
                     SSLUtil.ignoreSsl();
                     this.client = new PixivClient(cookieField.getText(), proxy, true);
-                    if (client.getUserData() == null) {
-                        Main.showAlert("错误", "登录失败");
-                        return;
-                    }
+                    Objects.requireNonNull(client.getUserData());
                     Platform.runLater(() -> {
                         userNameLbl.setText("已登录: " + client.getUserData().getName());
                         openArtworkBtn.setDisable(false);

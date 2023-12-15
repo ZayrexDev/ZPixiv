@@ -45,6 +45,7 @@ public class MainController implements Initializable {
 
     public void exitBtnOnAction() {
         Platform.exit();
+        Main.getTpe().shutdownNow();
     }
 
     @Override
