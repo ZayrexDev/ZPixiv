@@ -10,6 +10,8 @@ module ZPixiv {
     requires javafx.web;
     requires animated.gif.lib;
     requires java.desktop;
+    requires eu.iamgio.animated;
+    requires AnimateFX;
 
     exports xyz.zcraft.zpixiv.api.artwork;
     exports xyz.zcraft.zpixiv.api.user;

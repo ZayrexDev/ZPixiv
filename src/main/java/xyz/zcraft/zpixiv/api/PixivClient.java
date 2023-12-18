@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
+import xyz.zcraft.zpixiv.api.artwork.BgSlideArtwork;
 import xyz.zcraft.zpixiv.api.artwork.GifData;
 import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
 import xyz.zcraft.zpixiv.api.user.PixivUser;
@@ -68,17 +69,6 @@ public class PixivClient {
         return cookieMap;
     }
 
-    public void followUser(PixivUser user) throws IOException {
-        final var c = getConnection(Urls.FOLLOW_USER, Connection.Method.POST);
-
-        String requestBuilder = "mode=add&type=user&user_id=" +
-                user.getId() +
-                "&tag=&restrict=0&format=json";
-        c.requestBody(requestBuilder);
-
-        c.post();
-    }
-
     public static String getArtworkPageUrl(String id) {
         return Urls.ARTWORK + id;
     }
@@ -95,6 +85,36 @@ public class PixivClient {
                 return "en";
             }
         }
+    }
+
+    public List<BgSlideArtwork> getLoginBackground() throws IOException {
+        final var c = Jsoup.connect(Urls.MAIN)
+                .userAgent(userAgent)
+                .ignoreContentType(true)
+                .method(Connection.Method.GET)
+                .timeout(10 * 1000);
+        setConnectionProxy(c);
+
+        final String orig = Objects.requireNonNull(c.get().getElementById("init-config")).attr("value");
+        final JSONObject obj = JSONObject.parseObject(orig.replace("&quot;", "\""));
+
+        final JSONArray jsonArray = obj.getJSONObject("pixivBackgroundSlideshow.illusts").getJSONArray("landscape");
+        final LinkedList<BgSlideArtwork> result = new LinkedList<>();
+        for (int i = 0; i < jsonArray.size(); i++) {
+            result.add(jsonArray.getJSONObject(i).to(BgSlideArtwork.class));
+        }
+        return result;
+    }
+
+    public void followUser(PixivUser user) throws IOException {
+        final var c = getConnection(Urls.FOLLOW_USER, Connection.Method.POST);
+
+        String requestBuilder = "mode=add&type=user&user_id=" +
+                user.getId() +
+                "&tag=&restrict=0&format=json";
+        c.requestBody(requestBuilder);
+
+        c.post();
     }
 
     public void getGifData(PixivArtwork artwork) throws IOException {
