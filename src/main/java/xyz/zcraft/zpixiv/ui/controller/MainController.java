@@ -55,12 +55,6 @@ public class MainController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         LOG.info("Initializing main layout...");
-        msgPane = new AnimatedVBox(new AnimationPair(new FadeInUp(), new SlideOutLeft()).setSpeed(3, 3));
-        AnchorPane.setRightAnchor(msgPane, 0d);
-        AnchorPane.setBottomAnchor(msgPane, 10d);
-        msgPane.setPrefHeight(AnimatedVBox.USE_COMPUTED_SIZE);
-        msgPane.setPrefWidth(AnimatedVBox.USE_COMPUTED_SIZE);
-        msgPane.setVisible(true);
         try {
             FXMLLoader loader = new FXMLLoader(ResourceLoader.load("fxml/Demo.fxml"));
             addContent(loader.getController(), loader.load());
