@@ -9,7 +9,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Line;
 import javafx.util.Duration;
 import lombok.Getter;
-import xyz.zcraft.zpixiv.ui.util.ResourceLoader;
+import xyz.zcraft.zpixiv.util.ResourceLoader;
 
 import java.io.IOException;
 

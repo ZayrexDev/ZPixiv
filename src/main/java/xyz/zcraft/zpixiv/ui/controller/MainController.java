@@ -1,9 +1,5 @@
 package xyz.zcraft.zpixiv.ui.controller;
 
-import animatefx.animation.FadeInUp;
-import animatefx.animation.SlideOutLeft;
-import eu.iamgio.animated.transition.AnimationPair;
-import eu.iamgio.animated.transition.container.AnimatedVBox;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -20,15 +16,16 @@ import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.zcraft.zpixiv.ui.Main;
-import xyz.zcraft.zpixiv.ui.util.Refreshable;
-import xyz.zcraft.zpixiv.ui.util.ResourceLoader;
+import xyz.zcraft.zpixiv.util.Closeable;
+import xyz.zcraft.zpixiv.util.Refreshable;
+import xyz.zcraft.zpixiv.util.ResourceLoader;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.Stack;
 
-import static xyz.zcraft.zpixiv.ui.util.LayoutUtil.fillAnchor;
+import static xyz.zcraft.zpixiv.util.LayoutUtil.fillAnchor;
 
 public class MainController implements Initializable {
     private static final Logger LOG = LogManager.getLogger(MainController.class);
@@ -45,6 +42,12 @@ public class MainController implements Initializable {
     private double offsetS = -1;
 
     public void profileBtnOnAction() {
+        try {
+            FXMLLoader loader = new FXMLLoader(ResourceLoader.load("fxml/Login.fxml"));
+            addContent(loader.getController(), loader.load());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void exitBtnOnAction() {
@@ -87,6 +90,7 @@ public class MainController implements Initializable {
         );
         timeline.setOnFinished(event -> {
             pane.setVisible(false);
+            if(controllers.peek()instanceof Closeable c) c.close();
             contentPane.getChildren().remove(pane);
             controllers.pop();
             checkPaneControlBtn();
@@ -150,5 +154,14 @@ public class MainController implements Initializable {
     public void resizeStart(MouseEvent mouseEvent) {
         offsetE = mouseEvent.getScreenX();
         offsetS = mouseEvent.getSceneY();
+    }
+
+    public void configBtnOnAction() {
+        try {
+            FXMLLoader loader = new FXMLLoader(ResourceLoader.load("fxml/Settings.fxml"));
+            addContent(loader.getController(), loader.load());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

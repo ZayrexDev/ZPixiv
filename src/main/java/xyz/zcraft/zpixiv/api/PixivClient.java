@@ -151,7 +151,7 @@ public class PixivClient {
         JSONArray body = JSONObject.parseObject(c.get().body().ownText()).getJSONArray("body");
         artwork.setImageUrls(new LinkedList<>());
         for (int i = 0; i < body.size(); i++) {
-            artwork.getImageUrls().add(body.getJSONObject(i).getJSONObject("urls").getString("original"));
+            artwork.getImageUrls().add(body.getJSONObject(i).getJSONObject("urls"));
         }
     }
 

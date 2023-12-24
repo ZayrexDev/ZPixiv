@@ -1,4 +1,4 @@
-package xyz.zcraft.zpixiv.ui.util;
+package xyz.zcraft.zpixiv.util;
 
 public interface Refreshable {
     void refresh();

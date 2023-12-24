@@ -1,4 +1,4 @@
-package xyz.zcraft.zpixiv.ui.util;
+package xyz.zcraft.zpixiv.util;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;

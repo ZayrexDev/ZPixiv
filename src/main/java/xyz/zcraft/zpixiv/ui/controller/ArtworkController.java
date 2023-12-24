@@ -23,26 +23,24 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.zcraft.zpixiv.api.PixivClient;
 import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
+import xyz.zcraft.zpixiv.api.artwork.Quality;
 import xyz.zcraft.zpixiv.ui.Main;
-import xyz.zcraft.zpixiv.ui.util.Refreshable;
+import xyz.zcraft.zpixiv.util.CachedImage;
+import xyz.zcraft.zpixiv.util.Closeable;
+import xyz.zcraft.zpixiv.util.Identifier;
+import xyz.zcraft.zpixiv.util.Refreshable;
 
 import javax.imageio.ImageIO;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Objects;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.zip.ZipInputStream;
 
-public class ArtworkController implements Initializable, Refreshable {
+public class ArtworkController implements Initializable, Refreshable, Closeable {
     private static final Logger LOG = LogManager.getLogger(ArtworkController.class);
     private final LinkedList<LoadTask> tasks = new LinkedList<>();
     @FXML
@@ -78,7 +76,7 @@ public class ArtworkController implements Initializable, Refreshable {
     @FXML
     public WebView descView;
     @FXML
-    public ScrollPane root;
+    public AnchorPane root;
     @FXML
     public AnchorPane imgAnchor;
     @FXML
@@ -94,15 +92,15 @@ public class ArtworkController implements Initializable, Refreshable {
     public AnchorPane pageWrapperPane;
     public FlowPane tagsPane;
     public Button downloadBtn;
+    public ImageView inspectImg;
     private PixivClient client;
     private PixivArtwork artwork;
     private volatile LoadTask currentTask = null;
-    private Image[] images;
+    private CachedImage[] images;
     private int currentIndex = 1;
     private FadeTransition pageWrapperPaneFadeOutTransition;
     private FadeTransition pageWrapperPaneFadeInTransition;
     private Image previewImg;
-    private Path[] cachePath = null;
 
     private static FadeTransition getFadeOutTransition(Node node) {
         FadeTransition f = new FadeTransition();
@@ -143,7 +141,7 @@ public class ArtworkController implements Initializable, Refreshable {
             if (currentIndex == 1 && images[0] == null) {
                 imgView.setImage(previewImg);
             } else {
-                imgView.setImage(images[currentIndex - 1]);
+                imgView.setImage(images[currentIndex - 1].getImage());
             }
             nextPageBtn.setDisable(currentIndex >= artwork.getOrigData().getPageCount());
             prevPageBtn.setDisable(currentIndex <= 1);
@@ -186,6 +184,7 @@ public class ArtworkController implements Initializable, Refreshable {
                     refreshTasks();
                 } else {
                     Platform.runLater(() -> {
+                        if(currentTask == null) return;
                         processLabel.setText(currentTask.getName());
                         loadProgressBar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
                         currentTask.addListener((v) -> Platform.runLater(() -> loadProgressBar.setProgress(v)));
@@ -206,6 +205,8 @@ public class ArtworkController implements Initializable, Refreshable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         imgView.fitWidthProperty().bind(((HBox) imgView.getParent()).widthProperty());
         imgView.fitHeightProperty().bind(((HBox) imgView.getParent()).heightProperty());
+//        inspectImg.fitWidthProperty().bind(root.widthProperty().add(-10));
+//        inspectImg.fitHeightProperty().bind(root.heightProperty().add(-10));
         loadPane.setVisible(false);
         pageWrapperPane.setVisible(false);
 
@@ -252,8 +253,7 @@ public class ArtworkController implements Initializable, Refreshable {
         bookmarkLbl.setText(String.valueOf(artwork.getOrigData().getBookmarkCount()));
         viewLbl.setText(String.valueOf(artwork.getOrigData().getViewCount()));
 
-        images = new Image[artwork.getOrigData().getPageCount()];
-        cachePath = new Path[artwork.getOrigData().getPageCount()];
+        images = new CachedImage[artwork.getOrigData().getPageCount()];
 
         if (artwork.getOrigData().getPageCount() <= 1) {
             pageWrapperPane.setVisible(false);
@@ -268,7 +268,6 @@ public class ArtworkController implements Initializable, Refreshable {
 
         loadTags();
 
-        Main.getTpe().submit(getPreviewLoadRunnable());
         Main.getTpe().submit(getAuthorImgRunnable());
 
         if (artwork.isGif()) {
@@ -292,48 +291,55 @@ public class ArtworkController implements Initializable, Refreshable {
             while (tries-- >= 1) {
                 try {
                     client.getGifData(artwork);
+                    CachedImage image;
+                    Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Gif, 0, Quality.Original);
+                    Optional<CachedImage> cache = CachedImage.getCache(identifier);
+                    if(cache.isPresent()) {
+                        image = cache.get();
+                        t.setFinished(true);
+                    } else {
+                        image = CachedImage.createCache(identifier, path -> {
+                            try {
+                                URL url = new URL(artwork.getGifData().getSrc());
+                                URLConnection c;
+                                if (client.getProxy() != null)
+                                    c = url.openConnection(client.getProxy());
+                                else c = url.openConnection();
 
-                    URL url = new URL(artwork.getGifData().getSrc());
+                                c.setRequestProperty("Referer", PixivClient.Urls.REFERER);
 
-                    URLConnection c;
-                    if (client.getProxy() != null)
-                        c = url.openConnection(client.getProxy());
-                    else c = url.openConnection();
+                                final InputStream inputStream = c.getInputStream();
+                                ZipInputStream zis = new ZipInputStream(inputStream);
 
-                    c.setRequestProperty("Referer", PixivClient.Urls.REFERER);
+                                AnimatedGifEncoder age = new AnimatedGifEncoder();
+                                age.setRepeat(0);
+                                age.setDelay(artwork.getGifData().getOrigFrame().getJSONObject(0).getInteger("delay"));
 
-                    final InputStream inputStream = c.getInputStream();
-                    ZipInputStream zis = new ZipInputStream(inputStream);
+                                age.start(Files.newOutputStream(path));
 
-                    AnimatedGifEncoder age = new AnimatedGifEncoder();
-                    age.setRepeat(0);
-                    age.setDelay(artwork.getGifData().getOrigFrame().getJSONObject(0).getInteger("delay"));
+                                final double total = artwork.getGifData().getOrigFrame().size();
+                                double cur = 0;
+                                while (zis.getNextEntry() != null) {
+                                    age.addFrame(ImageIO.read(zis));
+                                    t.setProgress(++cur / total);
+                                }
 
-                    final Path tempFile = Files.createTempFile("zpixiv-", ".tmp");
-                    tempFile.toFile().deleteOnExit();
+                                age.finish();
 
-                    age.start(Files.newOutputStream(tempFile));
+                                t.setFinished(true);
 
-                    final double total = artwork.getGifData().getOrigFrame().size();
-                    double cur = 0;
-                    while (zis.getNextEntry() != null) {
-                        age.addFrame(ImageIO.read(zis));
-                        t.setProgress(++cur / total);
+                                return new Image(Files.newInputStream(path));
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+                        image.addToCache();
                     }
-
-                    age.finish();
-
-                    t.setFinished(true);
-
-                    final Image image = new Image(Files.newInputStream(tempFile));
                     images[0] = image;
-                    cachePath[0] = tempFile;
-
-                    Platform.runLater(() -> imgView.setImage(image));
-
+                    Platform.runLater(() -> imgView.setImage(image.getImage()));
                     t1.setFinished(true);
                     return;
-                } catch (IOException e) {
+                } catch (Exception e) {
                     LOG.error("Can't load gif data", e);
                 }
             }
@@ -368,42 +374,50 @@ public class ArtworkController implements Initializable, Refreshable {
             final LoadTask t = new LoadTask("加载预览");
             postLoadTask(t);
             try {
-                client.getFullPages(artwork);
+                CachedImage image;
+                Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Small, 0, Quality.ThumbMini);
+                Optional<CachedImage> cache = CachedImage.getCache(identifier);
+                if (cache.isPresent()) {
+                    image = cache.get();
+                } else {
+                    image = CachedImage.createCache(identifier, path -> {
+                        try {
+                            URL url = new URL(artwork.getOrigData().getUrls().getString(Quality.Small.getStr()));
+                            URLConnection c;
 
-                URL url = new URL(artwork.getOrigData().getUrls().getString("small"));
-                URLConnection c;
+                            if (client.getProxy() != null)
+                                c = url.openConnection(client.getProxy());
+                            else c = url.openConnection();
 
-                if (client.getProxy() != null)
-                    c = url.openConnection(client.getProxy());
-                else c = url.openConnection();
+                            c.setRequestProperty("Referer", "https://www.pixiv.net");
 
-                c.setRequestProperty("Referer", "https://www.pixiv.net");
+                            var o = Files.newOutputStream(path);
+                            var b = new BufferedInputStream(c.getInputStream());
+                            byte[] buffer = new byte[10240];
+                            int size;
+                            int contentLength = c.getContentLength();
+                            int curLength = 0;
+                            while ((size = b.read(buffer)) != -1) {
+                                o.write(buffer, 0, size);
+                                curLength += size;
+                                t.setProgress(Math.min((double) curLength / contentLength, 1.0));
+                            }
+                            o.close();
+                            b.close();
 
-                Path tempFile = Files.createTempFile("zpixiv-", ".tmp");
-                tempFile.toFile().deleteOnExit();
-
-                var o = Files.newOutputStream(tempFile);
-                var b = new BufferedInputStream(c.getInputStream());
-                byte[] buffer = new byte[10240];
-                int size;
-                int contentLength = c.getContentLength();
-                int curLength = 0;
-                while ((size = b.read(buffer)) != -1) {
-                    o.write(buffer, 0, size);
-                    curLength += size;
-                    t.setProgress(Math.min((double) curLength / contentLength, 1.0));
+                            return new Image(path.toFile().toURI().toURL().toString(), true);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                    image.addToCache();
                 }
-                o.close();
-                b.close();
-
-                previewImg = new Image(tempFile.toFile().toURI().toURL().toString(), true);
+                previewImg = image.getImage();
                 t.setFinished(true);
                 updateImageIndex();
                 LOG.info("Preview image loaded");
-            } catch (IOException e) {
-                LOG.error("Exception in loading preview image", e);
-                Main.showAlert("错误", "加载预览图像时出现错误");
-                t.setFailed(true);
+            } catch (Exception e) {
+                LOG.error("Failed to load preview image", e);
             }
         };
     }
@@ -417,6 +431,7 @@ public class ArtworkController implements Initializable, Refreshable {
                 try {
                     client.getFullPages(artwork);
                     LOG.info("Got {} pages for artwork {}", artwork.getOrigData().getPageCount(), artwork.getOrigData().getId());
+                    Main.getTpe().submit(getPreviewLoadRunnable());
                     for (int i = 1; i <= artwork.getOrigData().getPageCount(); i++) {
                         Main.getTpe().submit(getImagePageLoadRunnable(i));
                     }
@@ -443,8 +458,7 @@ public class ArtworkController implements Initializable, Refreshable {
             int tries = 3;
             while (tries >= 0) {
                 try {
-                    URL url = new URL(artwork.getImageUrls().get(index - 1));
-
+                    URL url = new URL(artwork.getImageUrls().get(index - 1).getString(Main.getConfig().getImageQuality().getStr()));
                     URLConnection c;
 
                     if (client.getProxy() != null)
@@ -453,36 +467,44 @@ public class ArtworkController implements Initializable, Refreshable {
 
                     c.setRequestProperty("Referer", "https://www.pixiv.net");
 
-                    Path tempFile = Files.createTempFile("zpixiv-", ".tmp");
-                    tempFile.toFile().deleteOnExit();
+                    Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Orig, index, Main.getConfig().getImageQuality());
+                    CachedImage image;
+                    Optional<CachedImage> cache = CachedImage.getCache(identifier);
+                    if (cache.isPresent()) {
+                        image = cache.get();
+                    } else {
+                        image = CachedImage.createCache(identifier, path -> {
+                            try {
+                                OutputStream o = Files.newOutputStream(path);
+                                var b = new BufferedInputStream(c.getInputStream());
+                                int contentLength = c.getContentLength();
+                                int curLength = 0;
+                                byte[] buffer = new byte[10240];
+                                int size;
+                                while ((size = b.read(buffer)) != -1) {
+                                    curLength += size;
+                                    t.setProgress(Math.min((double) curLength / contentLength, 1.0));
+                                    o.write(buffer, 0, size);
+                                }
+                                o.close();
+                                b.close();
+                                return new Image(path.toFile().toURI().toURL().toString());
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
 
-                    var o = Files.newOutputStream(tempFile);
-                    var b = new BufferedInputStream(c.getInputStream());
-                    int contentLength = c.getContentLength();
-                    int curLength = 0;
-                    byte[] buffer = new byte[10240];
-                    int size;
-                    while ((size = b.read(buffer)) != -1) {
-                        curLength += size;
-                        t.setProgress(Math.min((double) curLength / contentLength, 1.0));
-                        o.write(buffer, 0, size);
+                        image.addToCache();
                     }
-                    o.close();
-                    b.close();
-
-                    final Image image = new Image(tempFile.toFile().toURI().toURL().toString());
 
                     images[index - 1] = image;
-                    cachePath[index - 1] = tempFile;
-
                     updateImageIndex();
-
                     t.setFinished(true);
                     LOG.info("Page {} for artwork {} loaded", index, artwork.getOrigData().getId());
                     return;
-                } catch (IOException e) {
+                } catch (Exception e) {
                     LOG.error("Failed to get page " + index, e);
-                    tries++;
+                    tries--;
                 }
             }
 
@@ -496,23 +518,36 @@ public class ArtworkController implements Initializable, Refreshable {
         final String profileImg = artwork.getAuthor().getProfileImg();
         return () -> {
             try {
-                final Image image;
-                InputStream is;
-                URL url = new URL(profileImg);
-                URLConnection c;
+                CachedImage image;
+                Identifier identifier = Identifier.of(artwork.getAuthor().getId(), Identifier.Type.Author, 0, Quality.Original);
+                Optional<CachedImage> cache = CachedImage.getCache(identifier);
+                if (cache.isPresent()) {
+                    image = cache.get();
+                } else {
+                    image = CachedImage.createCache(identifier, path -> {
+                        try {
+                            InputStream is;
+                            URL url = new URL(profileImg);
+                            URLConnection c;
 
-                if (client.getProxy() != null)
-                    c = url.openConnection(client.getProxy());
-                else c = url.openConnection();
+                            if (client.getProxy() != null)
+                                c = url.openConnection(client.getProxy());
+                            else c = url.openConnection();
 
-                c.setRequestProperty("Referer", "https://www.pixiv.net");
+                            c.setRequestProperty("Referer", "https://www.pixiv.net");
 
-                is = c.getInputStream();
+                            is = c.getInputStream();
 
-                image = new Image(is);
-                Platform.runLater(() -> authorImg.setImage(image));
+                            return new Image(is);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                    image.addToCache();
+                }
+                Platform.runLater(() -> authorImg.setImage(image.getImage()));
                 LOG.info("Author image loaded");
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOG.error("Exception in author image", e);
             }
         };
@@ -521,7 +556,6 @@ public class ArtworkController implements Initializable, Refreshable {
     @Override
     public void refresh() {
         LOG.info("Reloading artwork {}", artwork.getOrigData().getId());
-        Main.getTpe().submit(getPreviewLoadRunnable());
         Main.getTpe().submit(getAuthorImgRunnable());
         Main.getTpe().submit(getImageLoadRunnable());
     }
@@ -623,13 +657,24 @@ public class ArtworkController implements Initializable, Refreshable {
         String ext;
 
         if (artwork.getOrigData().getIllustType() != 2) {
-            ext = artwork.getImageUrls().get(0).substring(artwork.getImageUrls().get(0).lastIndexOf('.'));
+            ext = artwork.getImageUrls().get(0).getString(Main.getConfig().getImageQuality().getStr()).substring(artwork.getImageUrls().get(0).getString(Main.getConfig().getImageQuality().getStr()).lastIndexOf('.'));
         } else {
             ext = ".gif";
         }
-        for (int i = 0, cachePathLength = cachePath.length; i < cachePathLength; i++) {
-            Path path = cachePath[i];
+        for (int i = 0, cachePathLength = images.length; i < cachePathLength; i++) {
+            Path path = images[i].getPath();
             Files.copy(path, file.resolve(artwork.getOrigData().getId() + "_p" + i + ext));
+        }
+    }
+
+    public void closeInspect() {
+
+    }
+
+    @Override
+    public void close() {
+        for (CachedImage image : images) {
+            image.markUnused();
         }
     }
 

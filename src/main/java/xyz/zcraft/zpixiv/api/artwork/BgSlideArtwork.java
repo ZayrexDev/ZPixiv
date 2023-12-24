@@ -2,7 +2,9 @@ package xyz.zcraft.zpixiv.api.artwork;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.annotation.JSONField;
+import lombok.Data;
 
+@Data
 public class BgSlideArtwork {
     @JSONField(name = "illust_id")
     private String id;

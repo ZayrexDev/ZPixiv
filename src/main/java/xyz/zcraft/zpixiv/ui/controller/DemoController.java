@@ -14,8 +14,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.zcraft.zpixiv.api.PixivClient;
 import xyz.zcraft.zpixiv.ui.Main;
-import xyz.zcraft.zpixiv.ui.util.ResourceLoader;
-import xyz.zcraft.zpixiv.ui.util.SSLUtil;
+import xyz.zcraft.zpixiv.util.ResourceLoader;
+import xyz.zcraft.zpixiv.util.SSLUtil;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

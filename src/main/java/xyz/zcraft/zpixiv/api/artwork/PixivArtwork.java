@@ -14,7 +14,7 @@ public class PixivArtwork {
     private final OrigData origData;
 
     private Set<Tag> tags;
-    private List<String> imageUrls;
+    private List<JSONObject> imageUrls;
     private GifData gifData;
 //    private PixivClient.From from;
 

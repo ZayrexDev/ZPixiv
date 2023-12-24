@@ -1,4 +1,4 @@
-package xyz.zcraft.zpixiv.ui.util;
+package xyz.zcraft.zpixiv.util;
 
 import javafx.scene.Node;
 import javafx.scene.layout.AnchorPane;

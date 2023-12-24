@@ -1,4 +1,4 @@
-package xyz.zcraft.zpixiv.ui.util;
+package xyz.zcraft.zpixiv.util;
 
 import xyz.zcraft.zpixiv.ui.Main;
 

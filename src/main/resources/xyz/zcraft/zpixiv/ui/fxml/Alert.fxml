@@ -10,7 +10,7 @@
 <?import javafx.scene.shape.Line?>
 <?import javafx.scene.text.Font?>
 
-<!--suppress JavaFxDefaultTag -->
+<!--suppress JavaFxDefaultTag, JavaFxUnusedImports -->
 <AnchorPane fx:id="root" maxWidth="135.0" minWidth="135.0" onMouseEntered="#mouseEntered" onMouseExited="#mouseExited" prefWidth="135.0" style="-fx-background-color: white; -fx-background-radius: 5;" stylesheets="@../css/alert.css" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.MsgController">
    <children>
       <VBox maxWidth="135.0" minWidth="135.0" prefWidth="135.0" spacing="2.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">

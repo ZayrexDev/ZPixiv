@@ -1,15 +1,129 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import eu.iamgio.animated.binding.misc.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.*?>
 <?import java.lang.*?>
 <?import java.util.*?>
 <?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<!--suppress ALL -->
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="xyz.zcraft.zpixiv.ui.controller.ConfigController"
-            prefHeight="400.0" prefWidth="600.0">
+<!--suppress JavaFxDefaultTag, JavaFxUnusedImports -->
 
-</AnchorPane>
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="500.0" prefHeight="350.0" prefWidth="500.0" spacing="5.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.ConfigController">
+   <children>
+      <Label text="设置">
+         <font>
+            <Font size="24.0" />
+         </font>
+      </Label>
+      <Separator prefWidth="200.0" />
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" maxHeight="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+         <content>
+            <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+               <children>
+                  <VBox>
+                     <children>
+                        <Label text="作品查看">
+                           <font>
+                              <Font size="18.0" />
+                           </font>
+                        </Label>
+                        <VBox maxWidth="1.7976931348623157E308">
+                           <children>
+                              <HBox maxWidth="1.7976931348623157E308" spacing="10.0" VBox.vgrow="ALWAYS">
+                                 <children>
+                                    <Label maxHeight="1.7976931348623157E308" text="画质" HBox.hgrow="ALWAYS" />
+                                    <ComboBox fx:id="qualityCombo" maxWidth="1.7976931348623157E308" prefWidth="100.0" />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </VBox.margin>
+                        </VBox>
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="下载">
+                           <font>
+                              <Font size="18.0" />
+                           </font>
+                        </Label>
+                        <VBox maxWidth="1.7976931348623157E308">
+                           <children>
+                              <HBox maxWidth="1.7976931348623157E308" spacing="10.0" VBox.vgrow="ALWAYS">
+                                 <children>
+                                    <Label maxHeight="1.7976931348623157E308" text="最大缓存大小" HBox.hgrow="ALWAYS" />
+                                    <TextField fx:id="cacheSizeField" />
+                                 </children>
+                              </HBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </VBox.margin>
+                        </VBox>
+                     </children>
+                  </VBox>
+                  <VBox>
+                     <children>
+                        <Label text="网络">
+                           <font>
+                              <Font size="18.0" />
+                           </font>
+                        </Label>
+                        <VBox maxWidth="1.7976931348623157E308">
+                           <children>
+                              <HBox maxWidth="1.7976931348623157E308" spacing="10.0" VBox.vgrow="ALWAYS">
+                                 <children>
+                                    <Label text="代理" />
+                                    <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <RadioButton fx:id="noProxyCombo" mnemonicParsing="false" onAction="#proxyComboChanged" selected="true" text="不使用代理">
+                                             <toggleGroup>
+                                                <ToggleGroup fx:id="proxy" />
+                                             </toggleGroup></RadioButton>
+                                          <HBox spacing="20.0" VBox.vgrow="ALWAYS">
+                                             <children>
+                                                <RadioButton fx:id="proxyCombo" maxHeight="1.7976931348623157E308" mnemonicParsing="false" onAction="#proxyComboChanged" text="代理" toggleGroup="$proxy" HBox.hgrow="ALWAYS">
+                                                   <HBox.margin>
+                                                      <Insets />
+                                                   </HBox.margin>
+                                                </RadioButton>
+                                                <HBox fx:id="proxyPane" disable="true" spacing="5.0">
+                                                   <children>
+                                                      <Label maxHeight="1.7976931348623157E308" text="主机" HBox.hgrow="ALWAYS" />
+                                                      <TextField fx:id="proxyHostField" prefWidth="125.0" />
+                                                      <Label maxHeight="1.7976931348623157E308" text="端口" HBox.hgrow="ALWAYS" />
+                                                      <TextField fx:id="proxyPortField" prefWidth="50.0" />
+                                                   </children>
+                                                </HBox>
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                           </children>
+                           <VBox.margin>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </VBox.margin>
+                        </VBox>
+                     </children>
+                  </VBox>
+               </children>
+            </VBox>
+         </content>
+      </ScrollPane>
+      <HBox alignment="CENTER_RIGHT">
+         <children>
+            <Button mnemonicParsing="false" onAction="#saveConfig" prefHeight="25.0" prefWidth="60.0" text="保存" />
+         </children>
+      </HBox>
+   </children>
+   <padding>
+      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+   </padding>
+</VBox>

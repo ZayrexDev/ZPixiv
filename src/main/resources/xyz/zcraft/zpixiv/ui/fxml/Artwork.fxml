@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.web.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
@@ -17,149 +24,158 @@
 <!--suppress JavaFxDefaultTag, JavaFxUnusedImports -->
 
 
-<ScrollPane fx:id="root" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: white;" stylesheets="@../css/artwork.css" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.ArtworkController">
-   <content>
-      <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: white;">
-         <children>
-            <VBox maxHeight="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+<AnchorPane fx:id="root" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.ArtworkController">
+   <children>
+      <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" prefHeight="417.0" prefWidth="535.0" style="-fx-background-color: white;" stylesheets="@../css/artwork.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <content>
+            <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: white;">
                <children>
-                  <HBox maxHeight="1.7976931348623157E308" prefHeight="100.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                  <VBox maxHeight="1.7976931348623157E308" VBox.vgrow="ALWAYS">
                      <children>
-                        <AnchorPane fx:id="imgAnchor" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="300.0" minWidth="300.0" onMouseEntered="#showPageWrapper" onMouseExited="#hidePageWrapper" prefHeight="300.0" prefWidth="300.0" HBox.hgrow="ALWAYS">
-                           <HBox.margin>
-                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                           </HBox.margin>
+                        <HBox maxHeight="1.7976931348623157E308" prefHeight="100.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
                            <children>
-                              <HBox alignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                              <AnchorPane fx:id="imgAnchor" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="300.0" minWidth="300.0" onMouseEntered="#showPageWrapper" onMouseExited="#hidePageWrapper" prefHeight="300.0" prefWidth="300.0" HBox.hgrow="ALWAYS">
+                                 <HBox.margin>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </HBox.margin>
                                  <children>
-                                    <ImageView fx:id="imgView" fitHeight="200.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
-                                 </children>
-                              </HBox>
-                              <AnchorPane fx:id="pageWrapperPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                                 <children>
-                                    <VBox alignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                    <HBox alignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                        <children>
-                                          <Button id="prevPageBtn" fx:id="prevPageBtn" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#prevPageBtnOnAction" prefHeight="20.0" prefWidth="20.0" styleClass="pageWrapper" text="&lt;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                                          <ImageView fx:id="imgView" fitHeight="200.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
                                        </children>
-                                    </VBox>
-                                    <VBox alignment="CENTER" layoutX="316.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                    </HBox>
+                                    <AnchorPane fx:id="pageWrapperPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                        <children>
-                                          <Button id="nextPageBtn" fx:id="nextPageBtn" layoutX="311.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#nextPageBtnOnAction" prefHeight="20.0" prefWidth="20.0" styleClass="pageWrapper" AnchorPane.rightAnchor="0.0" />
+                                          <VBox alignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                             <children>
+                                                <Button id="prevPageBtn" fx:id="prevPageBtn" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#prevPageBtnOnAction" prefHeight="20.0" prefWidth="20.0" styleClass="pageWrapper" text="&lt;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                                             </children>
+                                          </VBox>
+                                          <VBox alignment="CENTER" layoutX="316.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                             <children>
+                                                <Button id="nextPageBtn" fx:id="nextPageBtn" layoutX="311.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#nextPageBtnOnAction" prefHeight="20.0" prefWidth="20.0" styleClass="pageWrapper" AnchorPane.rightAnchor="0.0" />
+                                             </children>
+                                          </VBox>
                                        </children>
-                                    </VBox>
+                                    </AnchorPane>
+                                    <Label fx:id="pageLbl" text="0/0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0">
+                                       <padding>
+                                          <Insets bottom="2.0" left="5.0" right="5.0" top="2.0" />
+                                       </padding>
+                                       <font>
+                                          <Font name="System Bold" size="10.0" />
+                                       </font>
+                                    </Label>
                                  </children>
                               </AnchorPane>
-                              <Label fx:id="pageLbl" text="0/0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0">
-                                 <padding>
-                                    <Insets bottom="2.0" left="5.0" right="5.0" top="2.0" />
-                                 </padding>
-                                 <font>
-                                    <Font name="System Bold" size="10.0" />
-                                 </font>
-                              </Label>
-                           </children>
-                        </AnchorPane>
-                        <VBox maxHeight="1.7976931348623157E308" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" HBox.hgrow="NEVER">
-                           <children>
-                              <HBox alignment="CENTER" maxWidth="1.7976931348623157E308" prefHeight="0.0" prefWidth="200.0" spacing="6.0">
+                              <VBox maxHeight="1.7976931348623157E308" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" HBox.hgrow="NEVER">
                                  <children>
-                                    <ImageView fx:id="authorImg" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true" />
-                                    <VBox maxWidth="1.7976931348623157E308" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                                    <HBox alignment="CENTER" maxWidth="1.7976931348623157E308" prefHeight="0.0" prefWidth="200.0" spacing="6.0">
                                        <children>
-                                          <Label fx:id="authorNameLbl" alignment="TOP_LEFT" maxHeight="1.7976931348623157E308" text="author_name" VBox.vgrow="ALWAYS" />
-                                       </children>
-                                    </VBox>
-                                    <HBox alignment="CENTER" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" prefHeight="30.0" prefWidth="30.0" styleClass="svgBtn">
-                                       <children>
-                                          <Region id="followBtn" fx:id="followBtn" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" onMousePressed="#followBtnOnAction" prefHeight="20.0" prefWidth="20.0" styleClass="svgBtnImg" />
-                                       </children>
-                                       <HBox.margin>
-                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                       </HBox.margin>
-                                    </HBox>
-                                 </children>
-                              </HBox>
-                              <Label fx:id="pubDateLbl" maxWidth="1.7976931348623157E308" text="publish_date" textFill="#7b7b7b" VBox.vgrow="NEVER" />
-                              <VBox alignment="BOTTOM_CENTER" maxHeight="1.7976931348623157E308" spacing="10.0" VBox.vgrow="ALWAYS">
-                                 <children>
-                                    <VBox fx:id="loadPane">
-                                       <children>
-                                          <Label fx:id="processLabel" alignment="CENTER_RIGHT" maxWidth="1.7976931348623157E308" textOverrun="LEADING_ELLIPSIS" VBox.vgrow="ALWAYS" />
-                                          <ProgressBar fx:id="loadProgressBar" maxHeight="10.0" maxWidth="1.7976931348623157E308" minHeight="10.0" prefHeight="10.0" />
-                                       </children>
-                                    </VBox>
-                                    <HBox alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" prefWidth="0.0" spacing="5.0">
-                                       <children>
-                                          <Region id="likeImg" maxHeight="12.0" maxWidth="15.0" minHeight="12.0" minWidth="15.0" prefHeight="12.0" prefWidth="15.0" />
-                                          <Label fx:id="likeLbl" text="00000" textFill="#868686" />
-                                          <Region id="bmImg" maxHeight="15.0" maxWidth="15.0" minHeight="15.0" minWidth="15.0" prefHeight="15.0" prefWidth="15.0" />
-                                          <Label fx:id="bookmarkLbl" text="00000" textFill="#868686" />
-                                          <Region id="viewImg" maxHeight="12.0" maxWidth="16.0" minHeight="12.0" minWidth="16.0" prefHeight="12.0" prefWidth="16.0" />
-                                          <Label fx:id="viewLbl" text="00000" textFill="#868686" />
-                                       </children>
-                                    </HBox>
-                                    <HBox prefHeight="0.0" prefWidth="0.0" spacing="10.0">
-                                       <children>
-                                          <HBox alignment="CENTER_LEFT" fillHeight="false" maxWidth="1.7976931348623157E308" spacing="20.0" HBox.hgrow="ALWAYS">
+                                          <ImageView fx:id="authorImg" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true" />
+                                          <VBox maxWidth="1.7976931348623157E308" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
                                              <children>
-                                                <HBox alignment="CENTER" spacing="10.0">
+                                                <Label fx:id="authorNameLbl" alignment="TOP_LEFT" maxHeight="1.7976931348623157E308" text="author_name" VBox.vgrow="ALWAYS" />
+                                             </children>
+                                          </VBox>
+                                          <HBox alignment="CENTER" maxHeight="30.0" maxWidth="30.0" minHeight="30.0" minWidth="30.0" prefHeight="30.0" prefWidth="30.0" styleClass="svgBtn">
+                                             <children>
+                                                <Region id="followBtn" fx:id="followBtn" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" onMousePressed="#followBtnOnAction" prefHeight="20.0" prefWidth="20.0" styleClass="svgBtnImg" />
+                                             </children>
+                                             <HBox.margin>
+                                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                             </HBox.margin>
+                                          </HBox>
+                                       </children>
+                                    </HBox>
+                                    <Label fx:id="pubDateLbl" maxWidth="1.7976931348623157E308" text="publish_date" textFill="#7b7b7b" VBox.vgrow="NEVER" />
+                                    <VBox alignment="BOTTOM_CENTER" maxHeight="1.7976931348623157E308" spacing="10.0" VBox.vgrow="ALWAYS">
+                                       <children>
+                                          <VBox fx:id="loadPane">
+                                             <children>
+                                                <Label fx:id="processLabel" alignment="CENTER_RIGHT" maxWidth="1.7976931348623157E308" textOverrun="LEADING_ELLIPSIS" VBox.vgrow="ALWAYS" />
+                                                <ProgressBar fx:id="loadProgressBar" maxHeight="10.0" maxWidth="1.7976931348623157E308" minHeight="10.0" prefHeight="10.0" />
+                                             </children>
+                                          </VBox>
+                                          <HBox alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" prefWidth="0.0" spacing="5.0">
+                                             <children>
+                                                <Region id="likeImg" maxHeight="12.0" maxWidth="15.0" minHeight="12.0" minWidth="15.0" prefHeight="12.0" prefWidth="15.0" />
+                                                <Label fx:id="likeLbl" text="00000" textFill="#868686" />
+                                                <Region id="bmImg" maxHeight="15.0" maxWidth="15.0" minHeight="15.0" minWidth="15.0" prefHeight="15.0" prefWidth="15.0" />
+                                                <Label fx:id="bookmarkLbl" text="00000" textFill="#868686" />
+                                                <Region id="viewImg" maxHeight="12.0" maxWidth="16.0" minHeight="12.0" minWidth="16.0" prefHeight="12.0" prefWidth="16.0" />
+                                                <Label fx:id="viewLbl" text="00000" textFill="#868686" />
+                                             </children>
+                                          </HBox>
+                                          <HBox prefHeight="0.0" prefWidth="0.0" spacing="10.0">
+                                             <children>
+                                                <HBox alignment="CENTER_LEFT" fillHeight="false" maxWidth="1.7976931348623157E308" spacing="20.0" HBox.hgrow="ALWAYS">
                                                    <children>
-                                                      <Button fx:id="likeBtn" maxHeight="15.0" maxWidth="20.0" minHeight="15.0" minWidth="20.0" mnemonicParsing="false" onAction="#likeBtnOnAction" prefHeight="15.0" prefWidth="20.0" />
-                                                      <Label fx:id="likeTextLbl" maxHeight="1.7976931348623157E308" prefHeight="15.0" prefWidth="33.0" text="赞！" />
-                                                   </children>
-                                                </HBox>
-                                                <HBox>
-                                                   <children>
-                                                      <Button fx:id="bookmarkBtn" maxHeight="18.0" maxWidth="20.0" minHeight="18.0" minWidth="20.0" mnemonicParsing="false" onAction="#bookmarkBtnOnAction" prefHeight="18.0" prefWidth="20.0" />
-                                                   </children>
-                                                </HBox>
-                                                <HBox>
-                                                   <children>
-                                                      <Button fx:id="downloadBtn" maxHeight="18.0" maxWidth="20.0" minHeight="18.0" minWidth="20.0" mnemonicParsing="false" onAction="#downloadBtnOnAction" prefHeight="18.0" prefWidth="20.0" />
+                                                      <HBox alignment="CENTER" spacing="10.0">
+                                                         <children>
+                                                            <Button fx:id="likeBtn" maxHeight="15.0" maxWidth="20.0" minHeight="15.0" minWidth="20.0" mnemonicParsing="false" onAction="#likeBtnOnAction" prefHeight="15.0" prefWidth="20.0" />
+                                                            <Label fx:id="likeTextLbl" maxHeight="1.7976931348623157E308" prefHeight="15.0" prefWidth="33.0" text="赞！" />
+                                                         </children>
+                                                      </HBox>
+                                                      <HBox>
+                                                         <children>
+                                                            <Button fx:id="bookmarkBtn" maxHeight="18.0" maxWidth="20.0" minHeight="18.0" minWidth="20.0" mnemonicParsing="false" onAction="#bookmarkBtnOnAction" prefHeight="18.0" prefWidth="20.0" />
+                                                         </children>
+                                                      </HBox>
+                                                      <HBox>
+                                                         <children>
+                                                            <Button fx:id="downloadBtn" maxHeight="18.0" maxWidth="20.0" minHeight="18.0" minWidth="20.0" mnemonicParsing="false" onAction="#downloadBtnOnAction" prefHeight="18.0" prefWidth="20.0" />
+                                                         </children>
+                                                      </HBox>
                                                    </children>
                                                 </HBox>
                                              </children>
                                           </HBox>
                                        </children>
-                                    </HBox>
+                                    </VBox>
                                  </children>
+                                 <HBox.margin>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </HBox.margin>
                               </VBox>
                            </children>
-                           <HBox.margin>
+                        </HBox>
+                        <VBox spacing="5.0">
+                           <children>
+                              <HBox fx:id="titleBox" alignment="CENTER_LEFT" spacing="5.0">
+                                 <children>
+                                    <Label maxHeight="17.0" maxWidth="32.0" minHeight="17.0" minWidth="32.0" prefHeight="17.0" prefWidth="32.0" style="-fx-background-color: #FF4060; -fx-background-radius: 3;" text="R-18" textFill="WHITE" visible="false" fx:id="xResLbl">
+                                       <padding>
+                                          <Insets bottom="1.0" left="2.0" right="2.0" top="1.0" />
+                                       </padding>
+                                       <HBox.margin>
+                                          <Insets />
+                                       </HBox.margin>
+                                    </Label>
+                                    <Label fx:id="titleLbl" text="artwork_title">
+                                       <font>
+                                          <Font name="Microsoft YaHei UI" size="18.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </HBox>
+                              <WebView fx:id="descView" minHeight="50.0" minWidth="-1.0" prefHeight="50.0" prefWidth="-1.0" />
+                              <FlowPane fx:id="tagsPane" vgap="2.0" />
+                           </children>
+                           <VBox.margin>
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                           </HBox.margin>
+                           </VBox.margin>
                         </VBox>
                      </children>
-                  </HBox>
-                  <VBox spacing="5.0">
-                     <children>
-                        <HBox fx:id="titleBox" alignment="CENTER_LEFT" spacing="5.0">
-                           <children>
-                              <Label maxHeight="17.0" maxWidth="32.0" minHeight="17.0" minWidth="32.0" prefHeight="17.0" prefWidth="32.0" style="-fx-background-color: #FF4060; -fx-background-radius: 3;" text="R-18" textFill="WHITE" visible="false" fx:id="xResLbl">
-                                 <padding>
-                                    <Insets bottom="1.0" left="2.0" right="2.0" top="1.0" />
-                                 </padding>
-                                 <HBox.margin>
-                                    <Insets />
-                                 </HBox.margin>
-                              </Label>
-                              <Label fx:id="titleLbl" text="artwork_title">
-                                 <font>
-                                    <Font name="Microsoft YaHei UI" size="18.0" />
-                                 </font>
-                              </Label>
-                           </children>
-                        </HBox>
-                        <WebView fx:id="descView" minHeight="50.0" minWidth="-1.0" prefHeight="50.0" prefWidth="-1.0" />
-                        <FlowPane fx:id="tagsPane" vgap="2.0" />
-                     </children>
-                     <VBox.margin>
-                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                     </VBox.margin>
                   </VBox>
                </children>
             </VBox>
+         </content>
+      </ScrollPane>
+      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" style="-fx-background-color: rgba(255,255,255,0.6);" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <ImageView fx:id="inspectImg" fitHeight="150.0" fitWidth="200.0" onMousePressed="#closeInspect" pickOnBounds="true" preserveRatio="true" />
          </children>
-      </VBox>
-   </content>
-</ScrollPane>
+      </HBox>
+   </children>
+</AnchorPane>
