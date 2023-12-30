@@ -7,7 +7,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -16,7 +15,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.web.WebView;
 import javafx.stage.DirectoryChooser;
-import javafx.util.Duration;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
@@ -25,10 +23,8 @@ import xyz.zcraft.zpixiv.api.PixivClient;
 import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
 import xyz.zcraft.zpixiv.api.artwork.Quality;
 import xyz.zcraft.zpixiv.ui.Main;
-import xyz.zcraft.zpixiv.util.CachedImage;
 import xyz.zcraft.zpixiv.util.Closeable;
-import xyz.zcraft.zpixiv.util.Identifier;
-import xyz.zcraft.zpixiv.util.Refreshable;
+import xyz.zcraft.zpixiv.util.*;
 
 import javax.imageio.ImageIO;
 import java.io.*;
@@ -37,12 +33,14 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Consumer;
 import java.util.zip.ZipInputStream;
 
 public class ArtworkController implements Initializable, Refreshable, Closeable {
     private static final Logger LOG = LogManager.getLogger(ArtworkController.class);
-    private final LinkedList<LoadTask> tasks = new LinkedList<>();
+    private final LinkedBlockingQueue<LoadTask> tasks = new LinkedBlockingQueue<>();
+    private final Timer timer = new Timer();
     @FXML
     public ImageView imgView;
     @FXML
@@ -76,7 +74,7 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
     @FXML
     public WebView descView;
     @FXML
-    public AnchorPane root;
+    public ScrollPane root;
     @FXML
     public AnchorPane imgAnchor;
     @FXML
@@ -92,7 +90,6 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
     public AnchorPane pageWrapperPane;
     public FlowPane tagsPane;
     public Button downloadBtn;
-    public ImageView inspectImg;
     private PixivClient client;
     private PixivArtwork artwork;
     private volatile LoadTask currentTask = null;
@@ -101,25 +98,6 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
     private FadeTransition pageWrapperPaneFadeOutTransition;
     private FadeTransition pageWrapperPaneFadeInTransition;
     private Image previewImg;
-
-    private static FadeTransition getFadeOutTransition(Node node) {
-        FadeTransition f = new FadeTransition();
-        f.setNode(node);
-        f.setDuration(Duration.millis(300));
-        f.setOnFinished((u) -> node.setVisible(false));
-        f.setFromValue(1.0);
-        f.setToValue(0.0);
-        return f;
-    }
-
-    private static FadeTransition getFadeInTransition(Node node) {
-        FadeTransition f = new FadeTransition();
-        f.setNode(node);
-        f.setDuration(Duration.millis(300));
-        f.setFromValue(0.0);
-        f.setToValue(1.0);
-        return f;
-    }
 
     public void nextPageBtnOnAction() {
         if (currentIndex + 1 <= artwork.getOrigData().getPageCount()) {
@@ -156,7 +134,7 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
         tasks.add(task);
         task.addListener(t -> refreshTasks());
         if (!loadPane.isVisible()) {
-            final FadeTransition fadeInTransition = getFadeInTransition(loadPane);
+            final FadeTransition fadeInTransition = AnimationHelper.getFadeInTransition(loadPane);
             Platform.runLater(() -> {
                 fadeInTransition.playFromStart();
                 loadPane.setVisible(true);
@@ -166,7 +144,7 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
     }
 
     private synchronized void refreshTasks() {
-        tasks.removeIf(LoadTask::isFinished);
+        tasks.removeIf(e -> e == null || e.isFailed() || e.isFinished());
 
         if (currentTask != null) {
             if (currentTask.isFinished() || currentTask.isFailed()) {
@@ -174,39 +152,51 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
                 refreshTasks();
             }
         } else {
-            if (tasks.isEmpty() || tasks.getFirst() == null) {
-                Platform.runLater(() -> getFadeOutTransition(loadPane).playFromStart());
+            if (tasks.isEmpty() || tasks.peek() == null) {
+                Platform.runLater(() -> {
+                    synchronized (this) {
+                        if(loadPane.isVisible()) {
+                            AnimationHelper.getFadeOutTransition(loadPane).playFromStart();
+                        }
+                    }
+                });
                 return;
             } else {
-                currentTask = tasks.removeFirst();
+                currentTask = tasks.poll();
                 if (currentTask.isFinished() || currentTask.isFailed()) {
                     currentTask = null;
                     refreshTasks();
                 } else {
                     Platform.runLater(() -> {
-                        if(currentTask == null) return;
-                        processLabel.setText(currentTask.getName());
-                        loadProgressBar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
-                        currentTask.addListener((v) -> Platform.runLater(() -> loadProgressBar.setProgress(v)));
+                        synchronized (this) {
+                            if (currentTask == null) return;
+                            processLabel.setText(currentTask.getName());
+                            loadProgressBar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+                            currentTask.addListener((v) -> Platform.runLater(() -> loadProgressBar.setProgress(v)));
+                        }
                     });
                 }
             }
         }
 
-        StringBuilder sb = new StringBuilder();
-        for (int i = tasks.size() - 1; i >= 0; i--) {
-            sb.append(tasks.get(i).getName()).append(" ");
-        }
-        if (currentTask != null) sb.append(currentTask.getName());
-        Platform.runLater(() -> processLabel.setText(sb.toString()));
+        tasks.stream().map(LoadTask::getName)
+                .reduce((s, s2) -> s.concat(" ").concat(s2))
+                .ifPresent(s -> {
+                    synchronized (this) {
+                        if (currentTask != null) {
+                            s = s.concat(" ").concat(currentTask.getName());
+                        }
+                        String finalS = s;
+                        Platform.runLater(() -> processLabel.setText(finalS));
+                    }
+                });
     }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         imgView.fitWidthProperty().bind(((HBox) imgView.getParent()).widthProperty());
         imgView.fitHeightProperty().bind(((HBox) imgView.getParent()).heightProperty());
-//        inspectImg.fitWidthProperty().bind(root.widthProperty().add(-10));
-//        inspectImg.fitHeightProperty().bind(root.heightProperty().add(-10));
+
         loadPane.setVisible(false);
         pageWrapperPane.setVisible(false);
 
@@ -215,9 +205,15 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
         r.setArcHeight(authorImg.getFitHeight());
         authorImg.setClip(r);
 
-        pageWrapperPaneFadeOutTransition = getFadeOutTransition(pageWrapperPane);
+        pageWrapperPaneFadeOutTransition = AnimationHelper.getFadeOutTransition(pageWrapperPane);
         pageWrapperPaneFadeOutTransition.setOnFinished(actionEvent -> pageWrapperPane.setVisible(false));
-        pageWrapperPaneFadeInTransition = getFadeInTransition(pageWrapperPane);
+        pageWrapperPaneFadeInTransition = AnimationHelper.getFadeInTransition(pageWrapperPane);
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                refreshTasks();
+            }
+        }, 0, 1000);
     }
 
     public void load(PixivClient client, PixivArtwork artwork) {
@@ -294,7 +290,7 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
                     CachedImage image;
                     Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Gif, 0, Quality.Original);
                     Optional<CachedImage> cache = CachedImage.getCache(identifier);
-                    if(cache.isPresent()) {
+                    if (cache.isPresent()) {
                         image = cache.get();
                         t.setFinished(true);
                     } else {
@@ -375,7 +371,7 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
             postLoadTask(t);
             try {
                 CachedImage image;
-                Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Small, 0, Quality.ThumbMini);
+                Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Artwork, 0, Quality.ThumbMini);
                 Optional<CachedImage> cache = CachedImage.getCache(identifier);
                 if (cache.isPresent()) {
                     image = cache.get();
@@ -467,7 +463,7 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
 
                     c.setRequestProperty("Referer", "https://www.pixiv.net");
 
-                    Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Orig, index, Main.getConfig().getImageQuality());
+                    Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Artwork, index, Main.getConfig().getImageQuality());
                     CachedImage image;
                     Optional<CachedImage> cache = CachedImage.getCache(identifier);
                     if (cache.isPresent()) {
@@ -667,15 +663,16 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
         }
     }
 
-    public void closeInspect() {
-
-    }
-
     @Override
     public void close() {
         for (CachedImage image : images) {
-            image.markUnused();
+            if (image != null) image.markUnused();
         }
+        timer.cancel();
+    }
+
+    public void openInspect() {
+        if (Arrays.stream(images).allMatch(Objects::nonNull)) Main.openInspectStage(images);
     }
 
     @SuppressWarnings("unused")
@@ -692,9 +689,9 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
 final class LoadTask {
     private final String name;
     private final LinkedList<Consumer<Double>> changeListeners = new LinkedList<>();
-    private double progress = -1;
-    private boolean failed = false;
-    private boolean finished = false;
+    private volatile double progress = -1;
+    private volatile boolean failed = false;
+    private volatile boolean finished = false;
 
     public void setProgress(double progress) {
         this.progress = progress;

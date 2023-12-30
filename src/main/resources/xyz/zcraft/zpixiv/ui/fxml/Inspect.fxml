@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.text.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!--suppress JavaFxDefaultTag, JavaFxUnusedImports -->
+
+<AnchorPane fx:id="root" onKeyTyped="#onKeyTyped" onMouseEntered="#showPageWrapper" onMouseExited="#hidePageWrapper" onMouseMoved="#resetTimer" onScroll="#onScrolled" prefHeight="400.0" prefWidth="600.0" stylesheets="@../css/artwork.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.InspectController">
+   <children>
+      <HBox alignment="CENTER" layoutX="10.0" layoutY="10.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <ImageView fx:id="imgView" fitHeight="200.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" />
+         </children>
+      </HBox>
+      <AnchorPane fx:id="pageWrapperPane" layoutX="10.0" layoutY="10.0" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+         <children>
+            <VBox alignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <Button id="prevPageBtn" fx:id="prevPageBtn" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#prevPageBtnOnAction" prefHeight="20.0" prefWidth="20.0" styleClass="pageWrapper" text="&lt;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
+               </children>
+            </VBox>
+            <VBox alignment="CENTER" layoutX="316.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+               <children>
+                  <Button id="nextPageBtn" fx:id="nextPageBtn" layoutX="311.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#nextPageBtnOnAction" prefHeight="20.0" prefWidth="20.0" styleClass="pageWrapper" AnchorPane.rightAnchor="0.0" />
+               </children>
+            </VBox>
+         </children>
+      </AnchorPane>
+      <Label fx:id="pageLbl" layoutX="282.0" layoutY="292.0" text="0/0" AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="5.0">
+         <font>
+            <Font name="System Bold" size="10.0" />
+         </font>
+         <padding>
+            <Insets bottom="2.0" left="5.0" right="5.0" top="2.0" />
+         </padding>
+      </Label>
+   </children>
+</AnchorPane>

@@ -71,11 +71,11 @@ public class MainController implements Initializable {
         controllers.push(controller);
         pane.setVisible(false);
         contentPane.getChildren().add(pane);
-        final Timeline fadein = new Timeline(
+        final Timeline fadeIn = new Timeline(
                 new KeyFrame(Duration.millis(0), new KeyValue(pane.translateXProperty(), 100), new KeyValue(pane.opacityProperty(), 0)),
-                new KeyFrame(Duration.millis(500), new KeyValue(pane.translateXProperty(), 0, Interpolator.EASE_OUT), new KeyValue(pane.opacityProperty(), 1))
+                new KeyFrame(Duration.millis(350), new KeyValue(pane.translateXProperty(), 0, Interpolator.EASE_BOTH), new KeyValue(pane.opacityProperty(), 1))
         );
-        fadein.playFromStart();
+        fadeIn.playFromStart();
         pane.setVisible(true);
         checkPaneControlBtn();
     }

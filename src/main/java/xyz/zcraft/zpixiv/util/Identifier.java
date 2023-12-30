@@ -19,7 +19,7 @@ public class Identifier {
 
     @SuppressWarnings("unused")
     public enum Type {
-        Mini, Thumb, Small, Reg, Orig, Gif, Author
+        Artwork, Gif, Author
     }
 
     public static Identifier of(String id, Type type, int index, Quality quality) {
