@@ -3,25 +3,31 @@ package xyz.zcraft.zpixiv.ui.controller;
 import com.alibaba.fastjson2.JSONWriter;
 import javafx.application.Platform;
 import javafx.fxml.Initializable;
+import javafx.geometry.Rectangle2D;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.zcraft.zpixiv.api.PixivClient;
 import xyz.zcraft.zpixiv.api.artwork.BgSlideArtwork;
+import xyz.zcraft.zpixiv.api.artwork.Identifier;
 import xyz.zcraft.zpixiv.api.artwork.Quality;
+import xyz.zcraft.zpixiv.api.user.PixivUser;
 import xyz.zcraft.zpixiv.ui.Main;
+import xyz.zcraft.zpixiv.util.AnimationHelper;
 import xyz.zcraft.zpixiv.util.CachedImage;
-import xyz.zcraft.zpixiv.util.Identifier;
+import xyz.zcraft.zpixiv.util.SSLUtil;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
@@ -38,35 +44,37 @@ public class LoginController implements Initializable {
     public Label bgAuthorLbl;
     public AnchorPane root;
     public CachedImage curImg;
+    public VBox loadPane;
+    public Button okBtn;
+    public HBox loggedPane;
+    public ImageView userImg;
+    public Label userNameLbl;
+    public VBox loginPane;
 
-//    private void setBackground() {
-//        if (curImg == null) return;
-//        Rectangle2D vp;
-//        final double w = root.getWidth();
-//        final double h = root.getHeight();
-//        final double imgW = curImg.getImage().getWidth();
-//        final double imgH = curImg.getImage().getHeight();
-//        if (imgW / imgH > w / h) {
-//            bgImg.setFitHeight(h);
-//            bgImg.setFitWidth(0);
-//            vp = new Rectangle2D((imgW - (imgH / h * w)) / 2, 0, imgW, imgH);
-//        } else {
-//            bgImg.setFitWidth(w);
-//            bgImg.setFitHeight(0);
-//            vp = new Rectangle2D(0, (imgH - imgW / w * h) / 2, imgW, imgH);
-//        }
-//
-//        bgImg.setImage(curImg.getImage());
-//        bgImg.setViewport(vp);
-//    }
+    private void setBackground() {
+        if (curImg == null) return;
+        Rectangle2D vp;
+        final double w = root.getWidth();
+        final double h = root.getHeight();
+        final double imgW = curImg.getImage().getWidth();
+        final double imgH = curImg.getImage().getHeight();
+        if (imgW / imgH > w / h) {
+            bgImg.setFitHeight(h);
+            bgImg.setFitWidth(0);
+            vp = new Rectangle2D((imgW - (imgH / h * w)) / 2, 0, imgW, imgH);
+        } else {
+            bgImg.setFitWidth(w);
+            bgImg.setFitHeight(0);
+            vp = new Rectangle2D(0, (imgH - imgW / w * h) / 2, imgW, imgH);
+        }
+
+        bgImg.setImage(curImg.getImage());
+        bgImg.setViewport(vp);
+    }
 
     private void loadLoginBg() {
         try {
-            Proxy p = null;
-            if (Main.getConfig().getProxyHost() != null && Main.getConfig().getProxyPort() != null) {
-                p = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Main.getConfig().getProxyPort(), Integer.parseInt(Main.getConfig().getProxyHost())));
-            }
-            loginBgOrig = new PixivClient(null, p, false).getLoginBackground();
+            loginBgOrig = new PixivClient(null, Main.getConfig().getProxy(), false).getLoginBackground();
         } catch (IOException e) {
             LOG.error("Failed to get login backgrounds.", e);
         }
@@ -80,10 +88,8 @@ public class LoginController implements Initializable {
                 LOG.info(bgSlideArtwork.getProfileImg().toString(JSONWriter.Feature.PrettyFormat));
                 URLConnection c;
 
-                Proxy p;
-                if (Main.getConfig().getProxyHost() != null && Main.getConfig().getProxyPort() != null) {
-                    p = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(Main.getConfig().getProxyPort(), Integer.parseInt(Main.getConfig().getProxyHost())));
-                    c = url.openConnection(p);
+                if (Main.getConfig().getProxy() != null) {
+                    c = url.openConnection(Main.getConfig().getProxy());
                 } else {
                     c = url.openConnection();
                 }
@@ -121,13 +127,15 @@ public class LoginController implements Initializable {
                     bgAuthorLbl.setText(bgSlideArtwork.getUserName());
 
                     curImg = image;
+//                    setBackground();
+                    bgImg.setImage(image.getImage());
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            switchBackground();
+                        }
+                    }, 20 * 1000);
                 });
-                timer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        switchBackground();
-                    }
-                }, 20 * 1000);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -136,17 +144,18 @@ public class LoginController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        bgImg.fitWidthProperty().bind(root.widthProperty());
-        bgImg.fitHeightProperty().bind(root.heightProperty());
+//        bgImg.fitWidthProperty().bind(((VBox) bgImg.getParent()).widthProperty().add(-1));
+//        bgImg.fitHeightProperty().bind(((VBox) bgImg.getParent()).heightProperty().add(-1));
 
-        Main.getTpe().submit(() -> {
-            loadLoginBg();
-            switchBackground();
-        });
+//        Main.getTpe().submit(() -> {
+//            loadLoginBg();
+//            switchBackground();
+//        });
 
 //        final ChangeListener<Number> listener = (a, b, c) -> {
 //            LOG.info("{} {}", root.getWidth(), root.getHeight());
-//            bgImg.setViewport(new Rectangle2D(0, 0, root.getWidth(), root.getHeight()));
+////            bgImg.setViewport(new Rectangle2D(0, 0, root.getWidth(), root.getHeight()));
+////            setBackground();
 //        };
 //
 //        root.widthProperty().addListener(listener);
@@ -154,6 +163,58 @@ public class LoginController implements Initializable {
     }
 
     public void okButtonOnAction() {
+        AnimationHelper.getFadeInTransition(loadPane).playFromStart();
+        loadPane.setVisible(true);
+        okBtn.setDisable(true);
 
+        Main.getTpe().submit(() -> {
+            try {
+                SSLUtil.ignoreSsl();
+                final PixivClient client = new PixivClient(cookieField.getText(), Main.getConfig().getProxy(), true);
+                Main.setClient(client);
+                final PixivUser userData = client.getUserData();
+                CachedImage image;
+                Identifier identifier = Identifier.of(userData.getId(), Identifier.Type.Profile, 0, Quality.Original);
+                Optional<CachedImage> cache = CachedImage.getCache(identifier);
+                if (cache.isPresent()) {
+                    image = cache.get();
+                } else {
+                    image = CachedImage.createCache(identifier, path -> {
+                        try {
+                            InputStream is;
+                            URL url = new URL(userData.getProfileImg());
+                            URLConnection c;
+
+                            if (client.getProxy() != null)
+                                c = url.openConnection(client.getProxy());
+                            else c = url.openConnection();
+
+                            c.setRequestProperty("Referer", "https://www.pixiv.net");
+
+                            is = c.getInputStream();
+
+                            return new Image(is);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                    image.addToCache();
+                }
+                Platform.runLater(() -> {
+                    userImg.setImage(image.getImage());
+                    userNameLbl.setText(userData.getName());
+                    Main.getMainController().profileImg.setImage(image.getImage());
+                    AnimationHelper.getFadeOutTransition(loginPane).playFromStart();
+                    AnimationHelper.getFadeInTransition(loggedPane).playFromStart();
+                    loggedPane.setVisible(true);
+                });
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public void closeLogin() {
+        Main.getMainController().closeAll();
     }
 }

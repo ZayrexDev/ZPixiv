@@ -3,6 +3,7 @@ package xyz.zcraft.zpixiv.util;
 import javafx.scene.image.Image;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import xyz.zcraft.zpixiv.api.artwork.Identifier;
 import xyz.zcraft.zpixiv.ui.Main;
 
 import java.nio.file.Files;
@@ -35,6 +36,7 @@ public class CachedImage {
         if (ca.isPresent()) return ca.get();
 
         Path tempFile = Files.createTempFile("zpixiv-", ".tmp");
+        tempFile.toFile().deleteOnExit();
         return new CachedImage(tempFile, identifier, create.apply(Files.createTempFile("zpixiv-", ".tmp")));
     }
 

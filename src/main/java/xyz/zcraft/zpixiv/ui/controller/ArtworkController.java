@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.zcraft.zpixiv.api.PixivClient;
+import xyz.zcraft.zpixiv.api.artwork.Identifier;
 import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
 import xyz.zcraft.zpixiv.api.artwork.Quality;
 import xyz.zcraft.zpixiv.ui.Main;
@@ -40,7 +41,6 @@ import java.util.zip.ZipInputStream;
 public class ArtworkController implements Initializable, Refreshable, Closeable {
     private static final Logger LOG = LogManager.getLogger(ArtworkController.class);
     private final LinkedBlockingQueue<LoadTask> tasks = new LinkedBlockingQueue<>();
-    private final Timer timer = new Timer();
     @FXML
     public ImageView imgView;
     @FXML
@@ -98,6 +98,12 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
     private FadeTransition pageWrapperPaneFadeOutTransition;
     private FadeTransition pageWrapperPaneFadeInTransition;
     private Image previewImg;
+    private final TimerTask refreshTask = new TimerTask() {
+        @Override
+        public void run() {
+            if (currentTask != null || !tasks.isEmpty()) refreshTasks();
+        }
+    };
 
     public void nextPageBtnOnAction() {
         if (currentIndex + 1 <= artwork.getOrigData().getPageCount()) {
@@ -130,9 +136,9 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
 
     }
 
-    private void postLoadTask(LoadTask task) {
+    private synchronized void postLoadTask(LoadTask task) {
         tasks.add(task);
-        task.addListener(t -> refreshTasks());
+//        task.addListener(t -> refreshTasks());
         if (!loadPane.isVisible()) {
             final FadeTransition fadeInTransition = AnimationHelper.getFadeInTransition(loadPane);
             Platform.runLater(() -> {
@@ -140,7 +146,7 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
                 loadPane.setVisible(true);
             });
         }
-        refreshTasks();
+//        refreshTasks();
     }
 
     private synchronized void refreshTasks() {
@@ -155,9 +161,7 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
             if (tasks.isEmpty() || tasks.peek() == null) {
                 Platform.runLater(() -> {
                     synchronized (this) {
-                        if(loadPane.isVisible()) {
-                            AnimationHelper.getFadeOutTransition(loadPane).playFromStart();
-                        }
+                        AnimationHelper.getFadeOutTransition(loadPane).playFromStart();
                     }
                 });
                 return;
@@ -208,12 +212,8 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
         pageWrapperPaneFadeOutTransition = AnimationHelper.getFadeOutTransition(pageWrapperPane);
         pageWrapperPaneFadeOutTransition.setOnFinished(actionEvent -> pageWrapperPane.setVisible(false));
         pageWrapperPaneFadeInTransition = AnimationHelper.getFadeInTransition(pageWrapperPane);
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                refreshTasks();
-            }
-        }, 0, 1000);
+
+        Main.getTimer().schedule(refreshTask, 0, 250);
     }
 
     public void load(PixivClient client, PixivArtwork artwork) {
@@ -515,7 +515,7 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
         return () -> {
             try {
                 CachedImage image;
-                Identifier identifier = Identifier.of(artwork.getAuthor().getId(), Identifier.Type.Author, 0, Quality.Original);
+                Identifier identifier = Identifier.of(artwork.getAuthor().getId(), Identifier.Type.Profile, 0, Quality.Original);
                 Optional<CachedImage> cache = CachedImage.getCache(identifier);
                 if (cache.isPresent()) {
                     image = cache.get();
@@ -668,7 +668,7 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
         for (CachedImage image : images) {
             if (image != null) image.markUnused();
         }
-        timer.cancel();
+        refreshTask.cancel();
     }
 
     public void openInspect() {

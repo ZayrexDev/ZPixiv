@@ -4,13 +4,15 @@ import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.JSONWriter;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xyz.zcraft.zpixiv.api.PixivClient;
 import xyz.zcraft.zpixiv.ui.controller.InspectController;
 import xyz.zcraft.zpixiv.ui.controller.MainController;
 import xyz.zcraft.zpixiv.util.CachedImage;
@@ -22,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
+import java.util.Timer;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -31,6 +34,8 @@ public class Main extends Application {
     private static final Logger LOG = LogManager.getLogger(Main.class);
     @Getter
     private static final ThreadPoolExecutor tpe = (ThreadPoolExecutor) Executors.newCachedThreadPool();
+    @Getter
+    private static final Timer timer = new Timer();
     private static final Path configPath = Path.of("config.json");
     @Getter
     private static Config config;
@@ -38,6 +43,8 @@ public class Main extends Application {
     private static Stage stage = null;
     @Getter
     private static MainController mainController = null;
+    @Getter @Setter
+    private static PixivClient client = null;
 
     public static void main(String[] args) {
         try {
@@ -89,7 +96,9 @@ public class Main extends Application {
             SSLUtil.ignoreSsl();
             LOG.info("Loading frame");
             FXMLLoader loader = new FXMLLoader(Main.class.getResource("fxml/Main.fxml"));
-            final Parent main = loader.load();
+            final Pane main = loader.load();
+            main.maxWidthProperty().bind(stage.widthProperty());
+            main.maxHeightProperty().bind(stage.heightProperty());
             mainController = loader.getController();
             Scene s = new Scene(main);
 

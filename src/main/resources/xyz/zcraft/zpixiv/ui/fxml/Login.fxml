@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.geometry.Rectangle2D?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.image.ImageView?>
@@ -14,49 +14,86 @@
 
 <!--suppress JavaFxDefaultTag, JavaFxUnusedImports -->
 
-<AnchorPane fx:id="root" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="383.0" prefWidth="539.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.LoginController">
+<AnchorPane fx:id="root" prefHeight="300.0" prefWidth="500.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.LoginController">
    <children>
-      <AnchorPane mouseTransparent="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <AnchorPane layoutX="219.1999969482422" layoutY="141.60000610351562" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="300.0" prefWidth="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <ImageView fx:id="bgImg" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-               <viewport>
-                  <Rectangle2D />
-               </viewport></ImageView>
+            <ImageView fx:id="bgImg" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
          </children>
       </AnchorPane>
-      <VBox layoutX="250.0" layoutY="90.0" prefHeight="200.0" prefWidth="100.0" spacing="5.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="100.0" AnchorPane.rightAnchor="100.0" AnchorPane.topAnchor="50.0">
+      <AnchorPane layoutX="100.0" layoutY="50.0" AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="100.0" AnchorPane.rightAnchor="100.0" AnchorPane.topAnchor="50.0">
          <children>
-            <Label text="登录">
-               <font>
-                  <Font size="24.0" />
-               </font>
-            </Label>
-            <Separator prefWidth="200.0" />
-            <VBox spacing="10.0">
+            <VBox fx:id="loginPane" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                <children>
-                  <Label text="键入 Cookie 以登录。" />
-                  <TextArea fx:id="cookieField" prefHeight="200.0" prefWidth="200.0" promptText="Cookie" />
+                  <Label text="登录">
+                     <font>
+                        <Font size="24.0" />
+                     </font>
+                  </Label>
+                  <Separator prefWidth="200.0" />
+                  <VBox spacing="10.0">
+                     <children>
+                        <Label text="键入 Cookie 以登录。" />
+                        <AnchorPane>
+                           <children>
+                              <TextArea fx:id="cookieField" prefHeight="200.0" prefWidth="200.0" promptText="Cookie" wrapText="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                              <VBox fx:id="loadPane" alignment="CENTER" style="-fx-background-color: rgba(255,255,255,0.5);" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                                 <children>
+                                    <ProgressIndicator />
+                                 </children>
+                              </VBox>
+                           </children>
+                        </AnchorPane>
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </VBox.margin>
+                  </VBox>
+                  <VBox alignment="BOTTOM_RIGHT" VBox.vgrow="ALWAYS">
+                     <children>
+                        <Button fx:id="okBtn" mnemonicParsing="false" onAction="#okButtonOnAction" prefHeight="30.0" prefWidth="80.0" text="确定" />
+                     </children>
+                  </VBox>
                </children>
-               <VBox.margin>
-                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-               </VBox.margin>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding>
             </VBox>
-            <VBox alignment="BOTTOM_RIGHT" VBox.vgrow="ALWAYS">
+            <HBox fx:id="loggedPane" alignment="CENTER_LEFT" layoutY="96.80000305175781" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" visible="false" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
                <children>
-                  <Button mnemonicParsing="false" onAction="#okButtonOnAction" prefHeight="30.0" prefWidth="80.0" text="确定" />
+                  <ImageView fx:id="userImg" fitHeight="80.0" fitWidth="80.0" pickOnBounds="true" preserveRatio="true">
+                     <HBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </HBox.margin>
+                  </ImageView>
+                  <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label text="已登录：" />
+                        <Label fx:id="userNameLbl" text="USER NAME HERE">
+                           <font>
+                              <Font size="20.0" />
+                           </font>
+                        </Label>
+                        <VBox alignment="BOTTOM_RIGHT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                           <children>
+                              <Button mnemonicParsing="false" onAction="#closeLogin" text="确定" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </VBox>
                </children>
-            </VBox>
+            </HBox>
          </children>
-         <padding>
-            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-         </padding>
-      </VBox>
+      </AnchorPane>
       <HBox layoutX="600.0" layoutY="400.0" style="-fx-background-color: rgba(0, 0, 0, 0.2); -fx-background-radius: 8;" AnchorPane.bottomAnchor="8.0" AnchorPane.rightAnchor="10.0">
          <children>
             <ImageView fx:id="bgAuthorImg" fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true" />
-            <VBox alignment="CENTER" spacing="10.0">
+            <VBox alignment="CENTER_LEFT" spacing="10.0">
                <children>
-                  <Label fx:id="bgTitleLbl" textFill="WHITE" />
+                  <Label fx:id="bgTitleLbl" textFill="WHITE">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font></Label>
                   <Label fx:id="bgAuthorLbl" textFill="WHITE" />
                </children>
             </VBox>

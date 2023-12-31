@@ -6,24 +6,19 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import xyz.zcraft.zpixiv.api.PixivClient;
 import xyz.zcraft.zpixiv.ui.Main;
 import xyz.zcraft.zpixiv.util.ResourceLoader;
 import xyz.zcraft.zpixiv.util.SSLUtil;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.ResourceBundle;
 
@@ -31,19 +26,17 @@ public class DemoController implements Initializable {
     private static final Logger LOG = LogManager.getLogger(DemoController.class);
     private final FadeTransition pbHide = new FadeTransition();
     private final FadeTransition pbShow = new FadeTransition();
-    public TextField cookieField;
-    public TextField proxyHostField;
-    public TextField proxyPortField;
     public TextField idField;
     public TextField msgTitleField;
     public TextField msgContentField;
-    public Label userNameLbl;
     public Button openArtworkBtn;
     public ProgressBar progressBar;
-    public Button loginBtn;
-    private PixivClient client;
 
     public void openArtworkBtnOnAction() {
+        if (Main.getClient() == null) {
+            Main.showAlert("提示", "请先登录");
+            return;
+        }
         try {
             showPb();
             openArtworkBtn.setDisable(true);
@@ -55,9 +48,9 @@ public class DemoController implements Initializable {
             final ArtworkController controller = loader.getController();
             Main.getTpe().submit(() -> {
                 try {
-                    controller.load(client, client.getArtwork(idField.getText()));
+                    controller.load(Main.getClient(), Main.getClient().getArtwork(idField.getText()));
                     Platform.runLater(() -> {
-                        Main.getMainController().addContent(controller, p);
+                        Main.getMainController().addContent(controller, p, false);
                         hidePb();
                         openArtworkBtn.setDisable(false);
                     });
@@ -83,9 +76,6 @@ public class DemoController implements Initializable {
     public void save() {
         try {
             Properties properties = new Properties();
-            properties.put("cookie", cookieField.getText());
-            properties.put("proxyHost", proxyHostField.getText());
-            properties.put("proxyPort", proxyPortField.getText());
             properties.put("id", idField.getText());
             properties.store(Files.newOutputStream(Path.of("config.prop")), "ZPixiv Demo");
         } catch (IOException e) {
@@ -99,56 +89,9 @@ public class DemoController implements Initializable {
         try {
             final Properties properties = new Properties();
             properties.load(Files.newInputStream(configPath));
-            cookieField.setText(properties.getProperty("cookie"));
-            proxyHostField.setText(properties.getProperty("proxyHost"));
-            proxyPortField.setText(properties.getProperty("proxyPort"));
             idField.setText(properties.getProperty("id"));
         } catch (IOException e) {
             LOG.error(e);
-        }
-    }
-
-    public void login() {
-        LOG.info("Logging with cookie {}, proxy {}",
-                cookieField.getText(),
-                proxyHostField.getText() + ":" + proxyPortField.getText()
-        );
-        showPb();
-        loginBtn.setDisable(true);
-        try {
-            Main.getTpe().submit(() -> {
-                try {
-                    Proxy proxy;
-                    if (proxyHostField.getText() == null || proxyPortField.getText() == null || proxyHostField.getText().isBlank()) {
-                        proxy = null;
-                    } else {
-                        proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHostField.getText(), Integer.parseInt(proxyPortField.getText())));
-                    }
-                    SSLUtil.ignoreSsl();
-                    this.client = new PixivClient(cookieField.getText(), proxy, true);
-                    Objects.requireNonNull(client.getUserData());
-                    Platform.runLater(() -> {
-                        userNameLbl.setText("已登录: " + client.getUserData().getName());
-                        openArtworkBtn.setDisable(false);
-                        hidePb();
-                        loginBtn.setDisable(false);
-                    });
-                } catch (Exception e) {
-                    Main.showAlert("错误", "登录失败");
-                    LOG.error("Error logging in", e);
-                    Platform.runLater(() -> {
-                        hidePb();
-                        loginBtn.setDisable(false);
-                    });
-                }
-            });
-        } catch (Exception e) {
-            Main.showAlert("错误", "登录失败");
-            LOG.error("Error logging in", e);
-            Platform.runLater(() -> {
-                hidePb();
-                loginBtn.setDisable(false);
-            });
         }
     }
 

@@ -7,12 +7,15 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
+import javafx.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.zcraft.zpixiv.ui.Main;
@@ -29,22 +32,25 @@ import static xyz.zcraft.zpixiv.util.LayoutUtil.fillAnchor;
 
 public class MainController implements Initializable {
     private static final Logger LOG = LogManager.getLogger(MainController.class);
-    private final Stack<Object> controllers = new Stack<>();
+    private final Stack<Pair<Object, Parent>> contents = new Stack<>();
     public TextField topSearchBar;
     public AnchorPane contentPane;
     public AnchorPane main;
     public VBox closePageBtn;
     public VBox refreshBtn;
     public VBox msgPane;
+    public ImageView profileImg;
     private double offsetX = 0;
     private double offsetY = 0;
     private double offsetE = -1;
     private double offsetS = -1;
 
     public void profileBtnOnAction() {
+        if(Main.getClient() != null) return;
         try {
             FXMLLoader loader = new FXMLLoader(ResourceLoader.load("fxml/Login.fxml"));
-            addContent(loader.getController(), loader.load());
+            closeAll();
+            addContent(loader.getController(), loader.load(), true);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -53,22 +59,29 @@ public class MainController implements Initializable {
     public void exitBtnOnAction() {
         Platform.exit();
         Main.getTpe().shutdownNow();
+        Main.getTimer().cancel();
     }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         LOG.info("Initializing main layout...");
+
+        Rectangle r = new Rectangle(profileImg.getFitWidth(), profileImg.getFitHeight());
+        r.setArcWidth(profileImg.getFitWidth());
+        r.setArcHeight(profileImg.getFitHeight());
+        profileImg.setClip(r);
+
         try {
             FXMLLoader loader = new FXMLLoader(ResourceLoader.load("fxml/Demo.fxml"));
-            addContent(loader.getController(), loader.load());
+            addContent(loader.getController(), loader.load(), true);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void addContent(Object controller, Node pane) {
+    public synchronized void addContent(Object controller, Parent pane, boolean closePrevious) {
+        if (closePrevious) closeAll();
         fillAnchor(pane);
-        controllers.push(controller);
         pane.setVisible(false);
         contentPane.getChildren().add(pane);
         final Timeline fadeIn = new Timeline(
@@ -77,40 +90,50 @@ public class MainController implements Initializable {
         );
         fadeIn.playFromStart();
         pane.setVisible(true);
+        contents.push(new Pair<>(controller, pane));
         checkPaneControlBtn();
+        LOG.info(contents.toString());
     }
 
+    public void closeAll() {
+        for (int i = 0; i < Math.max(contents.size(), contentPane.getChildren().size()); i++) {
+            closePageBtnOnAction();
+        }
+    }
 
-    public void closePageBtnOnAction() {
-        if (controllers.isEmpty()) return;
-        final var pane = contentPane.getChildren().get(contentPane.getChildren().size() - 1);
-        final Timeline timeline = new Timeline(
-                new KeyFrame(Duration.millis(0), new KeyValue(pane.translateXProperty(), 0), new KeyValue(pane.opacityProperty(), 1)),
-                new KeyFrame(Duration.millis(200), new KeyValue(pane.translateXProperty(), -80, Interpolator.EASE_IN), new KeyValue(pane.opacityProperty(), 0))
-        );
-        timeline.setOnFinished(event -> {
-            pane.setVisible(false);
-            if(controllers.peek()instanceof Closeable c) c.close();
-            contentPane.getChildren().remove(pane);
-            controllers.pop();
-            checkPaneControlBtn();
-        });
-        timeline.playFromStart();
+    public synchronized void closePageBtnOnAction() {
+        if (!contents.isEmpty()) {
+            if (contents.peek().getKey() instanceof Closeable c) c.close();
+            final var pane = contents.peek().getValue();
+            final Timeline timeline = new Timeline(
+                    new KeyFrame(Duration.millis(0), new KeyValue(pane.translateXProperty(), 0), new KeyValue(pane.opacityProperty(), 1)),
+                    new KeyFrame(Duration.millis(200), new KeyValue(pane.translateXProperty(), -80, Interpolator.EASE_IN), new KeyValue(pane.opacityProperty(), 0))
+            );
+            timeline.setOnFinished(event -> {
+                pane.setVisible(false);
+                contentPane.getChildren().remove(pane);
+                checkPaneControlBtn();
+            });
+            timeline.playFromStart();
+            contents.pop();
+        }
+
+        LOG.info(contents.toString());
     }
 
     public void refreshBtnOnAction() {
-        if (controllers.peek() instanceof Refreshable refreshable) {
+        if (contents.peek() instanceof Refreshable refreshable) {
             refreshable.refresh();
         }
     }
 
     private void checkPaneControlBtn() {
-        if (!controllers.isEmpty()) {
-            refreshBtn.setDisable(!(controllers.peek() instanceof Refreshable));
-            closePageBtn.setDisable(false);
-        } else {
+        closePageBtn.setDisable(contents.isEmpty() && contentPane.getChildren().isEmpty());
+
+        if (contents.isEmpty()) {
             refreshBtn.setDisable(true);
-            closePageBtn.setDisable(true);
+        } else {
+            refreshBtn.setDisable(!(contents.peek() instanceof Refreshable));
         }
     }
 
@@ -159,7 +182,16 @@ public class MainController implements Initializable {
     public void configBtnOnAction() {
         try {
             FXMLLoader loader = new FXMLLoader(ResourceLoader.load("fxml/Settings.fxml"));
-            addContent(loader.getController(), loader.load());
+            addContent(loader.getController(), loader.load(), true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void demoBtnOnAction() {
+        try {
+            FXMLLoader loader = new FXMLLoader(ResourceLoader.load("fxml/Demo.fxml"));
+            addContent(loader.getController(), loader.load(), true);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

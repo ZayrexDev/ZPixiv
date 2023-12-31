@@ -11,7 +11,6 @@ import xyz.zcraft.zpixiv.ui.Main;
 import xyz.zcraft.zpixiv.util.Config;
 
 import java.net.URL;
-import java.util.Objects;
 import java.util.ResourceBundle;
 
 public class ConfigController implements Initializable {
@@ -34,10 +33,10 @@ public class ConfigController implements Initializable {
         config.setMaxCacheSize(Integer.parseInt(cacheSizeField.getText()));
         config.setImageQuality(qualityCombo.getSelectionModel().getSelectedItem());
         if (noProxyCombo.isSelected()) {
-            config.setProxyPort(null);
+            config.setProxyPort(0);
             config.setProxyHost(null);
         } else {
-            config.setProxyPort(proxyPortField.getText());
+            config.setProxyPort(Integer.parseInt(proxyPortField.getText()));
             config.setProxyHost(proxyHostField.getText());
         }
         try {
@@ -103,11 +102,11 @@ public class ConfigController implements Initializable {
         qualityCombo.getSelectionModel().select(config.getImageQuality());
         cacheSizeField.setText(String.valueOf(config.getMaxCacheSize()));
 
-        boolean proxy = !(Objects.isNull(config.getProxyPort()) || config.getProxyPort().isBlank());
+        boolean proxy = Main.getConfig().getProxy() != null;
         noProxyCombo.setSelected(!proxy);
         proxyCombo.setSelected(proxy);
         proxyPane.setDisable(!proxy);
-        proxyPortField.setText(config.getProxyPort());
+        proxyPortField.setText(String.valueOf(config.getProxyPort()));
         proxyHostField.setText(config.getProxyHost());
     }
 }

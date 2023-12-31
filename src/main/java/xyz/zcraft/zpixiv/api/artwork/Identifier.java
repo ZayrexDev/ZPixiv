@@ -1,7 +1,6 @@
-package xyz.zcraft.zpixiv.util;
+package xyz.zcraft.zpixiv.api.artwork;
 
 import lombok.Data;
-import xyz.zcraft.zpixiv.api.artwork.Quality;
 
 @Data
 public class Identifier {
@@ -19,7 +18,7 @@ public class Identifier {
 
     @SuppressWarnings("unused")
     public enum Type {
-        Artwork, Gif, Author
+        Artwork, Gif, Profile
     }
 
     public static Identifier of(String id, Type type, int index, Quality quality) {
