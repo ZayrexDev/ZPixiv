@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.Group?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
@@ -59,6 +68,31 @@
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                      </padding>
                   </VBox>
+               </content>
+            </Tab>
+            <Tab closable="false" text="样式">
+               <content>
+                  <FlowPane hgap="20.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" vgap="20.0">
+                     <children>
+                        <Button mnemonicParsing="false" text="Button" />
+                        <Label text="Label" />
+                        <RadioButton mnemonicParsing="false" text="RadioButton" />
+                        <CheckBox mnemonicParsing="false" text="CheckBox" />
+                        <ChoiceBox prefWidth="150.0" />
+                        <ComboBox prefWidth="150.0" promptText="ComboBox" />
+                        <Hyperlink text="Hyperlink" />
+                        <ProgressBar prefWidth="200.0" progress="0.44" />
+                        <Group />
+                        <ProgressBar prefWidth="200.0" />
+                        <ProgressIndicator maxHeight="50.0" minHeight="50.0" minWidth="50.0" prefHeight="50.0" progress="0.75" />
+                        <ProgressIndicator />
+                        <Separator prefWidth="200.0" />
+                        <Slider value="46.0" />
+                     </children>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </FlowPane>
                </content>
             </Tab>
          </tabs>

@@ -6,12 +6,10 @@ module ZPixiv {
     requires javafx.base;
     requires javafx.controls;
     requires javafx.fxml;
-    requires org.apache.logging.log4j.core;
+    requires java.base;
     requires javafx.web;
     requires animated.gif.lib;
     requires java.desktop;
-    requires eu.iamgio.animated;
-    requires AnimateFX;
 
     exports xyz.zcraft.zpixiv.api.artwork;
     exports xyz.zcraft.zpixiv.api.user;

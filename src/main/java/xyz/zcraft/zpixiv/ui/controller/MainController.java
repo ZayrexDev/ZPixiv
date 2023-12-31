@@ -9,6 +9,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -18,13 +19,18 @@ import javafx.util.Duration;
 import javafx.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import xyz.zcraft.zpixiv.api.PixivClient;
+import xyz.zcraft.zpixiv.api.artwork.Identifier;
+import xyz.zcraft.zpixiv.api.artwork.Quality;
+import xyz.zcraft.zpixiv.api.user.PixivUser;
 import xyz.zcraft.zpixiv.ui.Main;
-import xyz.zcraft.zpixiv.util.Closeable;
-import xyz.zcraft.zpixiv.util.Refreshable;
-import xyz.zcraft.zpixiv.util.ResourceLoader;
+import xyz.zcraft.zpixiv.util.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Stack;
 
@@ -46,7 +52,7 @@ public class MainController implements Initializable {
     private double offsetS = -1;
 
     public void profileBtnOnAction() {
-        if(Main.getClient() != null) return;
+        if (Main.getClient() != null) return;
         try {
             FXMLLoader loader = new FXMLLoader(ResourceLoader.load("fxml/Login.fxml"));
             closeAll();
@@ -63,7 +69,7 @@ public class MainController implements Initializable {
     }
 
     @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
+    public void initialize(URL urlIgnored, ResourceBundle resourceBundle) {
         LOG.info("Initializing main layout...");
 
         Rectangle r = new Rectangle(profileImg.getFitWidth(), profileImg.getFitHeight());
@@ -77,6 +83,55 @@ public class MainController implements Initializable {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        try {
+            final String s = Main.loadCookie();
+            if (s != null) {
+                profileImg.setDisable(true);
+
+                Main.getTpe().submit(() -> {
+                    try {
+                        SSLUtil.ignoreSsl();
+                        Main.setClient(new PixivClient(s, Main.getConfig().parseProxy(), true));
+                        final PixivUser userData = Main.getClient().getUserData();
+                        CachedImage image;
+                        Identifier identifier = Identifier.of(userData.getId(), Identifier.Type.Profile, 0, Quality.Original);
+                        Optional<CachedImage> cache = CachedImage.getCache(identifier);
+                        if (cache.isPresent()) {
+                            image = cache.get();
+                        } else {
+                            image = CachedImage.createCache(identifier, path -> {
+                                try {
+                                    InputStream is;
+                                    URL url = new URL(userData.getProfileImg());
+                                    URLConnection c;
+
+                                    if (Main.getClient().getProxy() != null)
+                                        c = url.openConnection(Main.getClient().getProxy());
+                                    else c = url.openConnection();
+
+                                    c.setRequestProperty("Referer", "https://www.pixiv.net");
+
+                                    is = c.getInputStream();
+
+                                    return new Image(is);
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
+                            image.addToCache();
+                        }
+                        Platform.runLater(() -> profileImg.setImage(image.getImage()));
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            }
+
+        } catch (IOException e) {
+            Main.showAlert("错误", "自动登录失败");
+            LOG.error("Error logging in.", e);
+        }
     }
 
     public synchronized void addContent(Object controller, Parent pane, boolean closePrevious) {
@@ -86,17 +141,16 @@ public class MainController implements Initializable {
         contentPane.getChildren().add(pane);
         final Timeline fadeIn = new Timeline(
                 new KeyFrame(Duration.millis(0), new KeyValue(pane.translateXProperty(), 100), new KeyValue(pane.opacityProperty(), 0)),
-                new KeyFrame(Duration.millis(350), new KeyValue(pane.translateXProperty(), 0, Interpolator.EASE_BOTH), new KeyValue(pane.opacityProperty(), 1))
+                new KeyFrame(Duration.millis(200), new KeyValue(pane.translateXProperty(), 0, Interpolator.EASE_OUT), new KeyValue(pane.opacityProperty(), 1))
         );
         fadeIn.playFromStart();
         pane.setVisible(true);
         contents.push(new Pair<>(controller, pane));
         checkPaneControlBtn();
-        LOG.info(contents.toString());
     }
 
     public void closeAll() {
-        for (int i = 0; i < Math.max(contents.size(), contentPane.getChildren().size()); i++) {
+        for (int i = 0; i < contents.size(); i++) {
             closePageBtnOnAction();
         }
     }
@@ -107,7 +161,7 @@ public class MainController implements Initializable {
             final var pane = contents.peek().getValue();
             final Timeline timeline = new Timeline(
                     new KeyFrame(Duration.millis(0), new KeyValue(pane.translateXProperty(), 0), new KeyValue(pane.opacityProperty(), 1)),
-                    new KeyFrame(Duration.millis(200), new KeyValue(pane.translateXProperty(), -80, Interpolator.EASE_IN), new KeyValue(pane.opacityProperty(), 0))
+                    new KeyFrame(Duration.millis(200), new KeyValue(pane.translateXProperty(), -100, Interpolator.EASE_IN), new KeyValue(pane.opacityProperty(), 0))
             );
             timeline.setOnFinished(event -> {
                 pane.setVisible(false);
@@ -117,8 +171,6 @@ public class MainController implements Initializable {
             timeline.playFromStart();
             contents.pop();
         }
-
-        LOG.info(contents.toString());
     }
 
     public void refreshBtnOnAction() {
@@ -195,5 +247,20 @@ public class MainController implements Initializable {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void minimizeBtnOnAction() {
+        final var oProperty = Main.getStage().opacityProperty();
+
+        final Timeline timeline = new Timeline();
+        timeline.getKeyFrames().addAll(
+                new KeyFrame(Duration.millis(0), new KeyValue(oProperty, 1)),
+                new KeyFrame(Duration.millis(100), new KeyValue(oProperty, 0))
+        );
+        timeline.setOnFinished((e) -> {
+            Main.getStage().setIconified(true);
+            Main.getStage().setOpacity(1);
+        });
+        timeline.playFromStart();
     }
 }

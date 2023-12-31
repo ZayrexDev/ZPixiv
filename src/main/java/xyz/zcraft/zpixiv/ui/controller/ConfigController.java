@@ -102,7 +102,7 @@ public class ConfigController implements Initializable {
         qualityCombo.getSelectionModel().select(config.getImageQuality());
         cacheSizeField.setText(String.valueOf(config.getMaxCacheSize()));
 
-        boolean proxy = Main.getConfig().getProxy() != null;
+        boolean proxy = Main.getConfig().parseProxy() != null;
         noProxyCombo.setSelected(!proxy);
         proxyCombo.setSelected(proxy);
         proxyPane.setDisable(!proxy);

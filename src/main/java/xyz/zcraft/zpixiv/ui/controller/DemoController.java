@@ -31,6 +31,7 @@ public class DemoController implements Initializable {
     public TextField msgContentField;
     public Button openArtworkBtn;
     public ProgressBar progressBar;
+    private final Path configPath = Main.getDataPath().resolve("config.prop");
 
     public void openArtworkBtnOnAction() {
         if (Main.getClient() == null) {
@@ -77,14 +78,13 @@ public class DemoController implements Initializable {
         try {
             Properties properties = new Properties();
             properties.put("id", idField.getText());
-            properties.store(Files.newOutputStream(Path.of("config.prop")), "ZPixiv Demo");
+            properties.store(Files.newOutputStream(configPath), "ZPixiv Demo");
         } catch (IOException e) {
             LOG.error(e);
         }
     }
 
     public void read() {
-        final Path configPath = Path.of("config.prop");
         if (!Files.exists(configPath)) return;
         try {
             final Properties properties = new Properties();

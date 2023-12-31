@@ -23,6 +23,7 @@ import xyz.zcraft.zpixiv.util.SSLUtil;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.concurrent.Executors;
@@ -36,13 +37,28 @@ public class Main extends Application {
     private static final ThreadPoolExecutor tpe = (ThreadPoolExecutor) Executors.newCachedThreadPool();
     @Getter
     private static final Timer timer = new Timer();
-    private static final Path configPath = Path.of("config.json");
+    @Getter
+    private static final Path dataPath = Path.of("data");
+    @Getter
+    private static final Path configPath = dataPath.resolve("config.json");
+    @Getter
+    private static final Path userPath = dataPath.resolve("user");
     @Getter
     private static Config config;
     @Getter
     private static Stage stage = null;
     @Getter
     private static MainController mainController = null;
+
+    public static void saveCookie(String cookie) throws IOException {
+        Files.writeString(userPath, Base64.getEncoder().encodeToString(cookie.getBytes()));
+    }
+
+    public static String loadCookie() throws IOException {
+        if(!Files.exists(userPath)) return null;
+        else return new String(Base64.getDecoder().decode(Files.readString(userPath)));
+    }
+
     @Getter @Setter
     private static PixivClient client = null;
 
@@ -101,10 +117,10 @@ public class Main extends Application {
             main.maxHeightProperty().bind(stage.heightProperty());
             mainController = loader.getController();
             Scene s = new Scene(main);
-
             stage.setScene(s);
 
             stage.initStyle(StageStyle.UNDECORATED);
+
             stage.show();
         } catch (IOException e) {
             LOG.error("Exception in window initialize", e);

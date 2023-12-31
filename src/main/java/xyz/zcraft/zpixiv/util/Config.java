@@ -12,7 +12,7 @@ public class Config {
     private int proxyPort = 0;
     private Quality imageQuality = Quality.Original;
 
-    public Proxy getProxy() {
+    public Proxy parseProxy() {
         if (proxyHost == null || proxyPort == 0) {
             return null;
         } else {

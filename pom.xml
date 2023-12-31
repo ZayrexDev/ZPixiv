@@ -112,6 +112,11 @@
             <artifactId>javafx-fxml</artifactId>
             <version>21.0.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>21.0.1</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.openjfx/javafx-web -->
         <dependency>
             <groupId>org.openjfx</groupId>

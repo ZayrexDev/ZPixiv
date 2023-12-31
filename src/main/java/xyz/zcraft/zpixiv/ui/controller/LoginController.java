@@ -22,6 +22,7 @@ import xyz.zcraft.zpixiv.api.user.PixivUser;
 import xyz.zcraft.zpixiv.ui.Main;
 import xyz.zcraft.zpixiv.util.AnimationHelper;
 import xyz.zcraft.zpixiv.util.CachedImage;
+import xyz.zcraft.zpixiv.util.Closeable;
 import xyz.zcraft.zpixiv.util.SSLUtil;
 
 import java.io.BufferedInputStream;
@@ -33,10 +34,11 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.util.*;
 
-public class LoginController implements Initializable {
+public class LoginController implements Initializable, Closeable {
     private static final Logger LOG = LogManager.getLogger(LoginController.class);
     private static List<BgSlideArtwork> loginBgOrig;
     private final Timer timer = new Timer();
+    private boolean closed = false;
     public TextArea cookieField;
     public ImageView bgAuthorImg;
     public ImageView bgImg;
@@ -74,7 +76,7 @@ public class LoginController implements Initializable {
 
     private void loadLoginBg() {
         try {
-            loginBgOrig = new PixivClient(null, Main.getConfig().getProxy(), false).getLoginBackground();
+            loginBgOrig = new PixivClient(null, Main.getConfig().parseProxy(), false).getLoginBackground();
         } catch (IOException e) {
             LOG.error("Failed to get login backgrounds.", e);
         }
@@ -88,8 +90,8 @@ public class LoginController implements Initializable {
                 LOG.info(bgSlideArtwork.getProfileImg().toString(JSONWriter.Feature.PrettyFormat));
                 URLConnection c;
 
-                if (Main.getConfig().getProxy() != null) {
-                    c = url.openConnection(Main.getConfig().getProxy());
+                if (Main.getConfig().parseProxy() != null) {
+                    c = url.openConnection(Main.getConfig().parseProxy());
                 } else {
                     c = url.openConnection();
                 }
@@ -121,7 +123,7 @@ public class LoginController implements Initializable {
 
                     image.addToCache();
                 }
-
+                if (closed) return;
                 Platform.runLater(() -> {
                     bgTitleLbl.setText(bgSlideArtwork.getTitle());
                     bgAuthorLbl.setText(bgSlideArtwork.getUserName());
@@ -170,8 +172,9 @@ public class LoginController implements Initializable {
         Main.getTpe().submit(() -> {
             try {
                 SSLUtil.ignoreSsl();
-                final PixivClient client = new PixivClient(cookieField.getText(), Main.getConfig().getProxy(), true);
+                final PixivClient client = new PixivClient(cookieField.getText(), Main.getConfig().parseProxy(), true);
                 Main.setClient(client);
+                Main.saveCookie(cookieField.getText());
                 final PixivUser userData = client.getUserData();
                 CachedImage image;
                 Identifier identifier = Identifier.of(userData.getId(), Identifier.Type.Profile, 0, Quality.Original);
@@ -216,5 +219,10 @@ public class LoginController implements Initializable {
 
     public void closeLogin() {
         Main.getMainController().closeAll();
+    }
+
+    @Override
+    public void close() {
+        closed = true;
     }
 }
