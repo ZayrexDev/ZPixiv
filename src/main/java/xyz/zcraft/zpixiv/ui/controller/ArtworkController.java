@@ -1,6 +1,5 @@
 package xyz.zcraft.zpixiv.ui.controller;
 
-import com.madgag.gif.fmsware.AnimatedGifEncoder;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -15,8 +14,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.web.WebView;
 import javafx.stage.DirectoryChooser;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.zcraft.zpixiv.api.PixivClient;
@@ -24,19 +21,18 @@ import xyz.zcraft.zpixiv.api.artwork.Identifier;
 import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
 import xyz.zcraft.zpixiv.api.artwork.Quality;
 import xyz.zcraft.zpixiv.ui.Main;
-import xyz.zcraft.zpixiv.util.Closeable;
 import xyz.zcraft.zpixiv.util.*;
 
-import javax.imageio.ImageIO;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.ResourceBundle;
+import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.function.Consumer;
-import java.util.zip.ZipInputStream;
 
 public class ArtworkController implements Initializable, Refreshable, Closeable {
     private static final Logger LOG = LogManager.getLogger(ArtworkController.class);
@@ -93,17 +89,17 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
     private PixivClient client;
     private PixivArtwork artwork;
     private volatile LoadTask currentTask = null;
-    private CachedImage[] images;
-    private int currentIndex = 1;
-    private FadeTransition pageWrapperPaneFadeOutTransition;
-    private FadeTransition pageWrapperPaneFadeInTransition;
-    private Image previewImg;
     private final TimerTask refreshTask = new TimerTask() {
         @Override
         public void run() {
             if (currentTask != null || !tasks.isEmpty()) refreshTasks();
         }
     };
+    private CachedImage[] images;
+    private int currentIndex = 1;
+    private FadeTransition pageWrapperPaneFadeOutTransition;
+    private FadeTransition pageWrapperPaneFadeInTransition;
+    private Image previewImg;
 
     public void nextPageBtnOnAction() {
         if (currentIndex + 1 <= artwork.getOrigData().getPageCount()) {
@@ -242,7 +238,7 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
             });
         }
 
-        authorNameLbl.setText(artwork.getAuthor().getName());
+        if (artwork.getAuthor() != null) authorNameLbl.setText(artwork.getAuthor().getName());
         pubDateLbl.setText(artwork.getOrigData().getCreateDate());
 
         likeLbl.setText(String.valueOf(artwork.getOrigData().getLikeCount()));
@@ -264,13 +260,24 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
 
         loadTags();
 
-        Main.getTpe().submit(getAuthorImgRunnable());
+        Main.getTpe().submit(() -> {
+            if (artwork.getAuthor() == null) {
+                try {
+                    client.getFullData(artwork);
+                } catch (IOException e) {
+                    LOG.error("Failed to load artwork.", e);
+                    Main.showAlert("错误", "加载失败");
+                    return;
+                }
+            }
+            Main.getTpe().submit(getAuthorImgRunnable());
 
-        if (artwork.isGif()) {
-            Main.getTpe().submit(getGifLoadRunnable());
-        } else {
-            Main.getTpe().submit(getImageLoadRunnable());
-        }
+            if (artwork.isGif()) {
+                Main.getTpe().submit(getGifLoadRunnable());
+            } else {
+                Main.getTpe().submit(getImageLoadRunnable());
+            }
+        });
 
         LOG.info("Loading artwork {} complete", artwork.getOrigData().getId());
     }
@@ -282,75 +289,28 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
             final LoadTask t1 = new LoadTask("解析动图");
             postLoadTask(t);
             postLoadTask(t1);
-            int tries = 3;
 
-            while (tries-- >= 1) {
-                try {
-                    client.getGifData(artwork);
-                    CachedImage image;
-                    Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Gif, 0, Quality.Original);
-                    Optional<CachedImage> cache = CachedImage.getCache(identifier);
-                    if (cache.isPresent()) {
-                        image = cache.get();
-                        t.setFinished(true);
-                    } else {
-                        image = CachedImage.createCache(identifier, path -> {
-                            try {
-                                URL url = new URL(artwork.getGifData().getSrc());
-                                URLConnection c;
-                                if (client.getProxy() != null)
-                                    c = url.openConnection(client.getProxy());
-                                else c = url.openConnection();
-
-                                c.setRequestProperty("Referer", PixivClient.Urls.REFERER);
-
-                                final InputStream inputStream = c.getInputStream();
-                                ZipInputStream zis = new ZipInputStream(inputStream);
-
-                                AnimatedGifEncoder age = new AnimatedGifEncoder();
-                                age.setRepeat(0);
-                                age.setDelay(artwork.getGifData().getOrigFrame().getJSONObject(0).getInteger("delay"));
-
-                                age.start(Files.newOutputStream(path));
-
-                                final double total = artwork.getGifData().getOrigFrame().size();
-                                double cur = 0;
-                                while (zis.getNextEntry() != null) {
-                                    age.addFrame(ImageIO.read(zis));
-                                    t.setProgress(++cur / total);
-                                }
-
-                                age.finish();
-
-                                t.setFinished(true);
-
-                                return new Image(Files.newInputStream(path));
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
-                        image.addToCache();
-                    }
-                    images[0] = image;
-                    Platform.runLater(() -> imgView.setImage(image.getImage()));
-                    t1.setFinished(true);
-                    return;
-                } catch (Exception e) {
-                    LOG.error("Can't load gif data", e);
-                }
+            Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Gif, 0, Quality.Original);
+            final CachedImage cachedImage;
+            try {
+                cachedImage = LoadHelper.loadImage(artwork.getGifData().getSrc(), identifier, 3, t);
+                images[0] = cachedImage;
+                Platform.runLater(() -> imgView.setImage(cachedImage.getImage()));
+                t1.setFinished(true);
+            } catch (Exception e) {
+                LOG.error("Failed to parse gif.", e);
+                t.setFailed(true);
+                t1.setFailed(true);
+                Main.showAlert("错误", "加载动图时出现错误");
             }
-
-            t.setFailed(true);
-            t1.setFailed(true);
-            Main.showAlert("错误", "加载动图时出现错误");
         };
     }
 
     private void loadTags() {
         artwork.getTags().forEach(tag -> {
-            Hyperlink orig = new Hyperlink("#" + tag.orig());
+            Hyperlink orig = new Hyperlink("#" + tag.getOrig());
 
-            Label trans = new Label(tag.trans());
+            Label trans = new Label(tag.getTrans());
             trans.setTextFill(Color.GRAY);
 
             HBox tagBox = new HBox();
@@ -369,46 +329,13 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
         return () -> {
             final LoadTask t = new LoadTask("加载预览");
             postLoadTask(t);
+            final Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Artwork, 0, Quality.ThumbMini);
             try {
-                CachedImage image;
-                Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Artwork, 0, Quality.ThumbMini);
-                Optional<CachedImage> cache = CachedImage.getCache(identifier);
-                if (cache.isPresent()) {
-                    image = cache.get();
-                } else {
-                    image = CachedImage.createCache(identifier, path -> {
-                        try {
-                            URL url = new URL(artwork.getOrigData().getUrls().getString(Quality.Small.getStr()));
-                            URLConnection c;
-
-                            if (client.getProxy() != null)
-                                c = url.openConnection(client.getProxy());
-                            else c = url.openConnection();
-
-                            c.setRequestProperty("Referer", "https://www.pixiv.net");
-
-                            var o = Files.newOutputStream(path);
-                            var b = new BufferedInputStream(c.getInputStream());
-                            byte[] buffer = new byte[10240];
-                            int size;
-                            int contentLength = c.getContentLength();
-                            int curLength = 0;
-                            while ((size = b.read(buffer)) != -1) {
-                                o.write(buffer, 0, size);
-                                curLength += size;
-                                t.setProgress(Math.min((double) curLength / contentLength, 1.0));
-                            }
-                            o.close();
-                            b.close();
-
-                            return new Image(path.toFile().toURI().toURL().toString(), true);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                    image.addToCache();
-                }
-                previewImg = image.getImage();
+                final CachedImage cachedImage = LoadHelper.loadImage(
+                        Objects.requireNonNullElse(artwork.getOrigData().getUrls().getString(Quality.Small.getStr()),
+                                artwork.getOrigData().getUrls().getString("1200x1200"))
+                        , identifier, 1, t);
+                previewImg = cachedImage.getImage();
                 t.setFinished(true);
                 updateImageIndex();
                 LOG.info("Preview image loaded");
@@ -451,57 +378,16 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
             LOG.info("Loading page {} for artwork {}", index, artwork.getOrigData().getId());
             final LoadTask t = new LoadTask("获取作品(" + index + ")");
             postLoadTask(t);
-            int tries = 3;
-            while (tries >= 0) {
-                try {
-                    URL url = new URL(artwork.getImageUrls().get(index - 1).getString(Main.getConfig().getImageQuality().getStr()));
-                    URLConnection c;
-
-                    if (client.getProxy() != null)
-                        c = url.openConnection(client.getProxy());
-                    else c = url.openConnection();
-
-                    c.setRequestProperty("Referer", "https://www.pixiv.net");
-
-                    Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Artwork, index, Main.getConfig().getImageQuality());
-                    CachedImage image;
-                    Optional<CachedImage> cache = CachedImage.getCache(identifier);
-                    if (cache.isPresent()) {
-                        image = cache.get();
-                    } else {
-                        image = CachedImage.createCache(identifier, path -> {
-                            try {
-                                OutputStream o = Files.newOutputStream(path);
-                                var b = new BufferedInputStream(c.getInputStream());
-                                int contentLength = c.getContentLength();
-                                int curLength = 0;
-                                byte[] buffer = new byte[10240];
-                                int size;
-                                while ((size = b.read(buffer)) != -1) {
-                                    curLength += size;
-                                    t.setProgress(Math.min((double) curLength / contentLength, 1.0));
-                                    o.write(buffer, 0, size);
-                                }
-                                o.close();
-                                b.close();
-                                return new Image(path.toFile().toURI().toURL().toString());
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        });
-
-                        image.addToCache();
-                    }
-
-                    images[index - 1] = image;
-                    updateImageIndex();
-                    t.setFinished(true);
-                    LOG.info("Page {} for artwork {} loaded", index, artwork.getOrigData().getId());
-                    return;
-                } catch (Exception e) {
-                    LOG.error("Failed to get page " + index, e);
-                    tries--;
-                }
+            final Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Artwork, index, Main.getConfig().getImageQuality());
+            try {
+                final CachedImage cachedImage = LoadHelper.loadImage(artwork.getImageUrls().get(index - 1).getString(Main.getConfig().getImageQuality().getStr()), identifier, 3, t);
+                images[index - 1] = cachedImage;
+                updateImageIndex();
+                t.setFinished(true);
+                LOG.info("Page {} for artwork {} loaded", index, artwork.getOrigData().getId());
+                return;
+            } catch (Exception e) {
+                LOG.error("Failed to get page " + index, e);
             }
 
             t.setFailed(true);
@@ -511,41 +397,12 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
     }
 
     private Runnable getAuthorImgRunnable() {
-        final String profileImg = artwork.getAuthor().getProfileImg();
         return () -> {
-            try {
-                CachedImage image;
-                Identifier identifier = Identifier.of(artwork.getAuthor().getId(), Identifier.Type.Profile, 0, Quality.Original);
-                Optional<CachedImage> cache = CachedImage.getCache(identifier);
-                if (cache.isPresent()) {
-                    image = cache.get();
-                } else {
-                    image = CachedImage.createCache(identifier, path -> {
-                        try {
-                            InputStream is;
-                            URL url = new URL(profileImg);
-                            URLConnection c;
-
-                            if (client.getProxy() != null)
-                                c = url.openConnection(client.getProxy());
-                            else c = url.openConnection();
-
-                            c.setRequestProperty("Referer", "https://www.pixiv.net");
-
-                            is = c.getInputStream();
-
-                            return new Image(is);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                    image.addToCache();
-                }
-                Platform.runLater(() -> authorImg.setImage(image.getImage()));
-                LOG.info("Author image loaded");
-            } catch (Exception e) {
-                LOG.error("Exception in author image", e);
-            }
+            Platform.runLater(() -> authorNameLbl.setText(artwork.getAuthor().getName()));
+            final Identifier identifier = Identifier.of(artwork.getAuthor().getId(), Identifier.Type.Profile, 0, Quality.Original);
+            final CachedImage cachedImage = LoadHelper.loadImage(artwork.getAuthor().getProfileImg(), identifier, 1, null);
+            Platform.runLater(() -> authorImg.setImage(cachedImage.getImage()));
+            LOG.info("Author info loaded");
         };
     }
 
@@ -674,55 +531,5 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
     public void openInspect() {
         if (Arrays.stream(images).allMatch(Objects::nonNull)) Main.openInspectStage(images);
     }
-
-    @SuppressWarnings("unused")
-    static class SvgIcon {
-        public static final String EMPTY = "M667.786667 117.333333 C832.864 117.333333 938.666667 249.706667 938.666667 427.861333 c0 138.250667-125.098667 290.506667-371.573334 461.589334 a96.768 96.768 0 0 1-110.186666 0 C210.432 718.368 85.333333 566.112 85.333333 427.861333 85.333333 249.706667 191.136 117.333333 356.213333 117.333333 c59.616 0 100.053333 20.832 155.786667 68.096 C567.744 138.176 608.170667 117.333333 667.786667 117.333333 z m0 63.146667 c-41.44 0-70.261333 15.189333-116.96 55.04-2.165333 1.845333-14.4 12.373333-17.941334 15.381333 a32.32 32.32 0 0 1-41.770666 0 c-3.541333-3.018667-15.776-13.536-17.941334-15.381333-46.698667-39.850667-75.52-55.04-116.96-55.04 C230.186667 180.48 149.333333 281.258667 149.333333 426.698667 149.333333 537.6 262.858667 675.242667 493.632 834.826667 a32.352 32.352 0 0 0 36.736 0 C761.141333 675.253333 874.666667 537.6 874.666667 426.698667 c0-145.44-80.853333-246.218667-206.88-246.218667 z";
-        public static final String FULL = "M667.786667 117.333333 C832.864 117.333333 938.666667 249.706667 938.666667 427.861333 c0 138.250667-125.098667 290.506667-371.573334 461.589334 a96.768 96.768 0 0 1-110.186666 0 C210.432 718.368 85.333333 566.112 85.333333 427.861333 85.333333 249.706667 191.136 117.333333 356.213333 117.333333 c59.616 0 100.053333 20.832 155.786667 68.096 C567.744 138.176 608.170667 117.333333 667.786667 117.333333 z";
-        public static final String TICK = "M5,7.08578644 L9.29289322,2.79289322 C9.68341751,2.40236893 10.3165825,2.40236893 10.7071068,2.79289322 C11.0976311,3.18341751 11.0976311,3.81658249 10.7071068,4.20710678 L5,9.91421356 L2.29289322,7.20710678 C1.90236893,6.81658249 1.90236893,6.18341751 2.29289322,5.79289322 C2.68341751,5.40236893 3.31658249,5.40236893 3.70710678,5.79289322 L5,7.08578644 Z";
-        public static final String SMILE = "M2,6 C0.8954305,6 0,5.1045695 0,4 C0,2.8954305 0.8954305,2 2,2 C3.1045695,2 4,2.8954305 4,4 C4,5.1045695 3.1045695,6 2,6 Z M10,6 C8.8954305,6 8,5.1045695 8,4 C8,2.8954305 8.8954305,2 10,2 C11.1045695,2 12,2.8954305 12,4 C12,5.1045695 11.1045695,6 10,6 Z M2.1109127,8.8890873 C1.72038841,8.498563 1.72038841,7.86539803 2.1109127,7.47487373 C2.501437,7.08434944 3.13460197,7.08434944 3.52512627,7.47487373 C4.89196129,8.84170876 7.10803871,8.84170876 8.47487373,7.47487373 C8.86539803,7.08434944 9.498563,7.08434944 9.8890873,7.47487373 C10.2796116,7.86539803 10.2796116,8.498563 9.8890873,8.8890873 C7.74120369,11.0369709 4.25879631,11.0369709 2.1109127,8.8890873 Z";
-    }
 }
 
-@Getter
-@RequiredArgsConstructor
-final class LoadTask {
-    private final String name;
-    private final LinkedList<Consumer<Double>> changeListeners = new LinkedList<>();
-    private volatile double progress = -1;
-    private volatile boolean failed = false;
-    private volatile boolean finished = false;
-
-    public void setProgress(double progress) {
-        this.progress = progress;
-        fireChanged();
-    }
-
-    public void setFailed(boolean failed) {
-        this.failed = failed;
-        fireChanged();
-    }
-
-    public void setFinished(boolean finished) {
-        this.finished = finished;
-        fireChanged();
-    }
-
-    public void addListener(Consumer<Double> lis) {
-        changeListeners.add(lis);
-    }
-
-    private void fireChanged() {
-        Main.getTpe().submit(() -> changeListeners.forEach(e -> e.accept(progress)));
-    }
-
-    @Override
-    public String toString() {
-        return "LoadTask{" +
-                "name='" + name + '\'' +
-                ", progress=" + progress +
-                ", failed=" + failed +
-                ", finished=" + finished +
-                '}';
-    }
-}

@@ -10,7 +10,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -28,10 +27,7 @@ import xyz.zcraft.zpixiv.ui.Main;
 import xyz.zcraft.zpixiv.util.*;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
-import java.net.URLConnection;
-import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Stack;
 
@@ -48,6 +44,8 @@ public class MainController implements Initializable {
     public VBox msgPane;
     public ImageView profileImg;
     public Label userNameLbl;
+    public AnchorPane topBar;
+    public VBox sideBar;
     private double offsetX = 0;
     private double offsetY = 0;
     private double offsetE = -1;
@@ -86,6 +84,9 @@ public class MainController implements Initializable {
             throw new RuntimeException(e);
         }
 
+        contentPane.maxWidthProperty().bind(main.maxWidthProperty().subtract(sideBar.widthProperty()));
+        contentPane.maxHeightProperty().bind(main.maxHeightProperty().subtract(topBar.heightProperty()));
+
         try {
             final String s = Main.loadCookie();
             if (s != null) {
@@ -98,33 +99,8 @@ public class MainController implements Initializable {
                         Main.setClient(client);
                         Platform.runLater(() -> Main.getMainController().userNameLbl.setText(client.getUserData().getName()));
                         final PixivUser userData = Main.getClient().getUserData();
-                        CachedImage image;
-                        Identifier identifier = Identifier.of(userData.getId(), Identifier.Type.Profile, 0, Quality.Original);
-                        Optional<CachedImage> cache = CachedImage.getCache(identifier);
-                        if (cache.isPresent()) {
-                            image = cache.get();
-                        } else {
-                            image = CachedImage.createCache(identifier, path -> {
-                                try {
-                                    InputStream is;
-                                    URL url = new URL(userData.getProfileImg());
-                                    URLConnection c;
-
-                                    if (Main.getConfig().parseProxy() != null)
-                                        c = url.openConnection(Main.getConfig().parseProxy());
-                                    else c = url.openConnection();
-
-                                    c.setRequestProperty("Referer", "https://www.pixiv.net");
-
-                                    is = c.getInputStream();
-
-                                    return new Image(is);
-                                } catch (IOException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            });
-                            image.addToCache();
-                        }
+                        final Identifier identifier = Identifier.of(userData.getId(), Identifier.Type.Profile, 0, Quality.Original);
+                        final CachedImage image = LoadHelper.loadImage(userData.getProfileImg(), identifier, 1, null);
                         Platform.runLater(() -> profileImg.setImage(image.getImage()));
                     } catch (Exception e) {
                         Platform.runLater(() -> {
@@ -136,7 +112,6 @@ public class MainController implements Initializable {
                     }
                 });
             }
-
         } catch (IOException e) {
             Main.showAlert("错误", "自动登录失败");
             LOG.error("Error logging in.", e);
@@ -271,5 +246,16 @@ public class MainController implements Initializable {
             Main.getStage().setOpacity(1);
         });
         timeline.playFromStart();
+    }
+
+    public void discBtnOnAction() {
+        try {
+            FXMLLoader loader = new FXMLLoader(ResourceLoader.load("fxml/Discovery.fxml"));
+            final Parent load = loader.load();
+            final DiscController controller = loader.getController();
+            addContent(controller, load, true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

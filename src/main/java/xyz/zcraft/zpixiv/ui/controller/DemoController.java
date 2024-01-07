@@ -5,9 +5,10 @@ import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
-import javafx.scene.control.Button;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,12 +27,15 @@ public class DemoController implements Initializable {
     private static final Logger LOG = LogManager.getLogger(DemoController.class);
     private final FadeTransition pbHide = new FadeTransition();
     private final FadeTransition pbShow = new FadeTransition();
+    private final Path configPath = Main.getDataPath().resolve("config.prop");
     public TextField idField;
     public TextField msgTitleField;
     public TextField msgContentField;
     public Button openArtworkBtn;
     public ProgressBar progressBar;
-    private final Path configPath = Main.getDataPath().resolve("config.prop");
+    public VBox root;
+    public AnchorPane imgParentParent;
+    public FlowPane artworkFlowPane;
 
     public void openArtworkBtnOnAction() {
         if (Main.getClient() == null) {
@@ -43,15 +47,14 @@ public class DemoController implements Initializable {
             openArtworkBtn.setDisable(true);
             SSLUtil.ignoreSsl();
 
-            final URL url = ResourceLoader.load("fxml/Artwork.fxml");
-            final FXMLLoader loader = new FXMLLoader(url);
+            final FXMLLoader loader = new FXMLLoader(ResourceLoader.load("fxml/Illust.fxml"));
             final Parent p = loader.load();
-            final ArtworkController controller = loader.getController();
+            final IllustController controller = loader.getController();
             Main.getTpe().submit(() -> {
                 try {
-                    controller.load(Main.getClient(), Main.getClient().getArtwork(idField.getText()));
+                    controller.load(Main.getClient().getArtwork(idField.getText()));
                     Platform.runLater(() -> {
-                        Main.getMainController().addContent(controller, p, false);
+                        artworkFlowPane.getChildren().add(p);
                         hidePb();
                         openArtworkBtn.setDisable(false);
                     });

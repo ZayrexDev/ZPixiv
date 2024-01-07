@@ -37,7 +37,7 @@ public class CachedImage {
 
         Path tempFile = Files.createTempFile("zpixiv-", ".tmp");
         tempFile.toFile().deleteOnExit();
-        return new CachedImage(tempFile, identifier, create.apply(Files.createTempFile("zpixiv-", ".tmp")));
+        return new CachedImage(tempFile, identifier, create.apply(tempFile));
     }
 
     private final static LinkedList<CachedImage> cachePool = new LinkedList<>();

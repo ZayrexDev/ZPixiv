@@ -1,0 +1,6 @@
+#img {
+    -fx-background-image: url("../img/test.jpg");
+    -fx-background-repeat: no-repeat;
+    -fx-background-size: cover;
+    -fx-background-position: center;
+}

@@ -53,21 +53,12 @@ public class ConfigController implements Initializable {
         qualityCombo.setConverter(new StringConverter<>() {
             @Override
             public String toString(Quality quality) {
-                switch (quality) {
-                    case ThumbMini -> {
-                        return "极小";
-                    }
-                    case Small -> {
-                        return "小";
-                    }
-                    case Regular -> {
-                        return "中等";
-                    }
-                    case Original -> {
-                        return "原图";
-                    }
-                    default -> throw new AssertionError();
-                }
+                return switch (quality) {
+                    case ThumbMini -> "极小";
+                    case Small -> "小";
+                    case Regular -> "中等";
+                    case Original -> "原图";
+                };
             }
 
             @Override

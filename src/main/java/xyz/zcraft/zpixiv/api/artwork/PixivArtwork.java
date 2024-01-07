@@ -3,6 +3,7 @@ package xyz.zcraft.zpixiv.api.artwork;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.annotation.JSONField;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import xyz.zcraft.zpixiv.api.user.PixivUser;
 
@@ -31,7 +32,10 @@ public class PixivArtwork {
         return origData.illustType == 2;
     }
 
-    public record Tag(String orig, String trans) {
+    @Data @AllArgsConstructor
+    public static class Tag {
+        private String orig;
+        private String trans;
     }
 
     @Data

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<!--suppress JavaFxDefaultTag, JavaFxUnusedImports -->
+
+<AnchorPane prefHeight="263.0" prefWidth="403.0" stylesheets="@../css/discovery.css" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.DiscController">
+   <children>
+      <ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefHeight="200.0" prefWidth="200.0" vbarPolicy="ALWAYS" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <content>
+            <VBox>
+               <children>
+                  <Region maxHeight="50.0" minHeight="50.0" prefHeight="50.0" />
+                  <FlowPane fx:id="artworkPane" hgap="10.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" vgap="10.0" VBox.vgrow="ALWAYS" />
+               </children>
+            </VBox>
+         </content>
+      </ScrollPane>
+      <HBox fx:id="topBar" alignment="CENTER_LEFT" maxHeight="50.0" minHeight="50.0" prefHeight="50.0" spacing="10.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="18.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <HBox alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="10.0" HBox.hgrow="ALWAYS">
+               <children>
+                  <Label maxHeight="1.7976931348623157E308" text="发现">
+                     <font>
+                        <Font size="24.0" />
+                     </font>
+                  </Label>
+                  <Region fx:id="refreshBtn" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" onMouseClicked="#refresh" prefHeight="20.0" prefWidth="20.0" stylesheets="@../css/discovery.css">
+                     <cursor>
+                        <Cursor fx:constant="HAND" />
+                     </cursor>
+                  </Region>
+               </children>
+            </HBox>
+            <ComboBox fx:id="modeCombo" prefWidth="80.0" promptText="模式" />
+         </children>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+      </HBox>
+      <ProgressBar fx:id="loadBar" maxHeight="10.0" minHeight="10.0" prefHeight="10.0" visible="false" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+   </children>
+</AnchorPane>
