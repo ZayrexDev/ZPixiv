@@ -506,17 +506,8 @@ public class PixivClient {
 //        return artworks;
 
 //    }
-    public void getFullData(PixivArtwork artwork) throws IOException {
-        Connection c = getConnection(getArtworkPageUrl(artwork.getOrigData().getId()), Connection.Method.GET);
-
-        final JSONObject content = JSONObject.parseObject(Objects.requireNonNull(c.get().head().getElementById("meta-preload-data")).attr("content"));
-        JSONObject jsonObject = content.getJSONObject("illust").getJSONObject(artwork.getOrigData().getId());
-
-        artwork.getOrigData().setBookmarkCount(jsonObject.getInteger("bookmarkCount"));
-        artwork.getOrigData().setLikeCount(jsonObject.getInteger("likeCount"));
-
-        final JSONObject userJsonObj = content.getJSONObject("user").getJSONObject(artwork.getOrigData().getUserId());
-        artwork.setAuthor(userJsonObj.to(PixivUser.class));
+    public PixivArtwork getFullData(PixivArtwork artwork) throws IOException {
+        return getArtwork(artwork.getOrigData().getId());
     }
 
 //    public Set<String> fetchUser(String uid) throws IOException {

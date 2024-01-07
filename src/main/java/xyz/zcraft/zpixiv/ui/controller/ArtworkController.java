@@ -87,7 +87,7 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
     public FlowPane tagsPane;
     public Button downloadBtn;
     private PixivClient client;
-    private PixivArtwork artwork;
+    private volatile PixivArtwork artwork;
     private volatile LoadTask currentTask = null;
     private final TimerTask refreshTask = new TimerTask() {
         @Override
@@ -212,12 +212,12 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
         Main.getTimer().schedule(refreshTask, 0, 250);
     }
 
-    public void load(PixivClient client, PixivArtwork artwork) {
-        if (client == null && artwork == null) return;
+    public void load(PixivClient client, PixivArtwork art) {
+        if (client == null && art == null) return;
+        this.client = client;
+        this.artwork = art;
 
         LOG.info("Loading artwork {}", artwork.getOrigData().getId());
-        this.client = client;
-        this.artwork = artwork;
         reloadArtworkStatus();
 
         titleLbl.setText(artwork.getOrigData().getTitle());
@@ -234,7 +234,7 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
             Platform.runLater(() -> {
                 descView.setContextMenuEnabled(false);
                 descView.getEngine().setUserStyleSheetLocation("data:,body{font: 12px Arial;}");
-                descView.getEngine().loadContent(artwork.getOrigData().getDescription());
+                descView.getEngine().loadContent(this.artwork.getOrigData().getDescription());
             });
         }
 
@@ -261,9 +261,17 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
         loadTags();
 
         Main.getTpe().submit(() -> {
-            if (artwork.getAuthor() == null) {
+            if (this.artwork.getAuthor() == null) {
                 try {
-                    client.getFullData(artwork);
+                    final LoadTask t = new LoadTask("获取完整信息");
+                    postLoadTask(t);
+                    this.artwork = client.getFullData(art);
+                    t.setFinished(true);
+                    Platform.runLater(() -> {
+                        likeLbl.setText(String.valueOf(artwork.getOrigData().getLikeCount()));
+                        bookmarkLbl.setText(String.valueOf(artwork.getOrigData().getBookmarkCount()));
+                        viewLbl.setText(String.valueOf(artwork.getOrigData().getViewCount()));
+                    });
                 } catch (IOException e) {
                     LOG.error("Failed to load artwork.", e);
                     Main.showAlert("错误", "加载失败");
