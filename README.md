@@ -1,7 +1,7 @@
 # ZPixiv
 一个第三方 Pixiv 客户端
 # Demo
-![动画](https://github.com/ZayrexDev/ZPixiv/assets/73475219/2f217911-53e3-454e-82c3-af98d5f5e130)
+![动画](https://github.com/ZayrexDev/ZPixiv/assets/73475219/f92b72b3-5e25-4af2-89f1-c1318f4c1e61)
 
 # 正在制作中...
 这个项目仍然在制作中，以下是一些制作目标：
