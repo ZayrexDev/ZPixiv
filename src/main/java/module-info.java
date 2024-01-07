@@ -11,6 +11,7 @@ module ZPixiv {
     requires animated.gif.lib;
     requires java.desktop;
     requires org.jetbrains.annotations;
+    requires org.controlsfx.controls;
 
     exports xyz.zcraft.zpixiv.api.artwork;
     exports xyz.zcraft.zpixiv.api.user;

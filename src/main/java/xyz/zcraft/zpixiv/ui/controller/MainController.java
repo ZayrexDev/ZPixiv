@@ -8,8 +8,10 @@ import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -19,6 +21,8 @@ import javafx.util.Duration;
 import javafx.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.controlsfx.control.PopOver;
+import org.jetbrains.annotations.NotNull;
 import xyz.zcraft.zpixiv.api.PixivClient;
 import xyz.zcraft.zpixiv.api.artwork.Identifier;
 import xyz.zcraft.zpixiv.api.artwork.Quality;
@@ -50,15 +54,19 @@ public class MainController implements Initializable {
     private double offsetY = 0;
     private double offsetE = -1;
     private double offsetS = -1;
+    private PopOver pop;
 
     public void profileBtnOnAction() {
-        if (Main.getClient() != null) return;
-        try {
-            FXMLLoader loader = new FXMLLoader(ResourceLoader.load("fxml/Login.fxml"));
-            closeAll();
-            addContent(loader.getController(), loader.load(), true);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (Main.getClient() != null) {
+            pop.show(profileImg);
+        } else {
+            try {
+                FXMLLoader loader = new FXMLLoader(ResourceLoader.load("fxml/Login.fxml"));
+                closeAll();
+                addContent(loader.getController(), loader.load(), true);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -87,6 +95,15 @@ public class MainController implements Initializable {
         contentPane.maxWidthProperty().bind(main.maxWidthProperty().subtract(sideBar.widthProperty()));
         contentPane.maxHeightProperty().bind(main.maxHeightProperty().subtract(topBar.heightProperty()));
 
+        final Button exitLoginBtn = getExitLoginBtn();
+
+        pop = new PopOver(profileImg);
+        pop.setAnimated(true);
+        pop.setCornerRadius(2);
+        pop.setArrowIndent(0);
+        pop.setContentNode(exitLoginBtn);
+        pop.hide();
+
         try {
             final String s = Main.loadCookie();
             if (s != null) {
@@ -101,7 +118,10 @@ public class MainController implements Initializable {
                         final PixivUser userData = Main.getClient().getUserData();
                         final Identifier identifier = Identifier.of(userData.getId(), Identifier.Type.Profile, 0, Quality.Original);
                         final CachedImage image = LoadHelper.loadImage(userData.getProfileImg(), identifier, 1, null);
-                        Platform.runLater(() -> profileImg.setImage(image.getImage()));
+                        Platform.runLater(() -> {
+                            profileImg.setImage(image.getImage());
+                            profileImg.setDisable(false);
+                        });
                     } catch (Exception e) {
                         Platform.runLater(() -> {
                             LOG.error("Failed to login", e);
@@ -116,6 +136,23 @@ public class MainController implements Initializable {
             Main.showAlert("错误", "自动登录失败");
             LOG.error("Error logging in.", e);
         }
+    }
+
+    @NotNull
+    private Button getExitLoginBtn() {
+        final Button exitLoginBtn = new Button("退出登录");
+        exitLoginBtn.setOnAction((e) -> {
+            try {
+                Main.deleteCookie();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+            Main.setClient(null);
+            Main.getMainController().profileImg.setImage(new Image(ResourceLoader.loadAsStream("img/user.png")));
+            Main.getMainController().userNameLbl.setText("未登录");
+            Main.showAlert("提示", "已退出登录");
+        });
+        return exitLoginBtn;
     }
 
     public synchronized void addContent(Object controller, Parent pane, boolean closePrevious) {

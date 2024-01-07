@@ -49,18 +49,22 @@ public class Main extends Application {
     private static Stage stage = null;
     @Getter
     private static MainController mainController = null;
+    @Getter
+    @Setter
+    private static PixivClient client = null;
 
     public static void saveCookie(String cookie) throws IOException {
         Files.writeString(userPath, Base64.getEncoder().encodeToString(cookie.getBytes()));
     }
 
     public static String loadCookie() throws IOException {
-        if(!Files.exists(userPath)) return null;
+        if (!Files.exists(userPath)) return null;
         else return new String(Base64.getDecoder().decode(Files.readString(userPath)));
     }
 
-    @Getter @Setter
-    private static PixivClient client = null;
+    public static void deleteCookie() throws IOException {
+        Files.delete(userPath);
+    }
 
     public static void main(String[] args) {
         try {
