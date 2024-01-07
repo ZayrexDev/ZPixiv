@@ -8,6 +8,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -46,6 +47,7 @@ public class MainController implements Initializable {
     public VBox refreshBtn;
     public VBox msgPane;
     public ImageView profileImg;
+    public Label userNameLbl;
     private double offsetX = 0;
     private double offsetY = 0;
     private double offsetE = -1;
@@ -88,11 +90,13 @@ public class MainController implements Initializable {
             final String s = Main.loadCookie();
             if (s != null) {
                 profileImg.setDisable(true);
-
+                userNameLbl.setText("登录中...");
                 Main.getTpe().submit(() -> {
                     try {
                         SSLUtil.ignoreSsl();
-                        Main.setClient(new PixivClient(s, Main.getConfig().parseProxy(), true));
+                        final PixivClient client = new PixivClient(s, Main.getConfig().parseProxy(), true);
+                        Main.setClient(client);
+                        Platform.runLater(() -> Main.getMainController().userNameLbl.setText(client.getUserData().getName()));
                         final PixivUser userData = Main.getClient().getUserData();
                         CachedImage image;
                         Identifier identifier = Identifier.of(userData.getId(), Identifier.Type.Profile, 0, Quality.Original);
@@ -106,8 +110,8 @@ public class MainController implements Initializable {
                                     URL url = new URL(userData.getProfileImg());
                                     URLConnection c;
 
-                                    if (Main.getClient().getProxy() != null)
-                                        c = url.openConnection(Main.getClient().getProxy());
+                                    if (Main.getConfig().parseProxy() != null)
+                                        c = url.openConnection(Main.getConfig().parseProxy());
                                     else c = url.openConnection();
 
                                     c.setRequestProperty("Referer", "https://www.pixiv.net");
@@ -123,7 +127,12 @@ public class MainController implements Initializable {
                         }
                         Platform.runLater(() -> profileImg.setImage(image.getImage()));
                     } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        Platform.runLater(() -> {
+                            LOG.error("Failed to login", e);
+                            profileImg.setDisable(false);
+                            userNameLbl.setText("未登录");
+                            Main.showAlert("错误", "自动登录失败");
+                        });
                     }
                 });
             }

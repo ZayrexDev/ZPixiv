@@ -175,6 +175,7 @@ public class LoginController implements Initializable, Closeable {
                 final PixivClient client = new PixivClient(cookieField.getText(), Main.getConfig().parseProxy(), true);
                 Main.setClient(client);
                 Main.saveCookie(cookieField.getText());
+                Platform.runLater(() -> Main.getMainController().userNameLbl.setText(client.getUserData().getName()));
                 final PixivUser userData = client.getUserData();
                 CachedImage image;
                 Identifier identifier = Identifier.of(userData.getId(), Identifier.Type.Profile, 0, Quality.Original);

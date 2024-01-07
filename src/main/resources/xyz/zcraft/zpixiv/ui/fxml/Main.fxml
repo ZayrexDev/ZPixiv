@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.Cursor?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
@@ -78,6 +79,7 @@
                         <Cursor fx:constant="HAND" />
                      </cursor>
                   </ImageView>
+                  <Label fx:id="userNameLbl" text="Label" />
                   <Separator prefWidth="200.0" />
                   <VBox alignment="TOP_CENTER" spacing="5.0" VBox.vgrow="ALWAYS">
                      <children>
