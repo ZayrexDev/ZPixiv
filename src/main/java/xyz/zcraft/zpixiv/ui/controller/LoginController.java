@@ -3,7 +3,6 @@ package xyz.zcraft.zpixiv.ui.controller;
 import com.alibaba.fastjson2.JSONWriter;
 import javafx.application.Platform;
 import javafx.fxml.Initializable;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -38,41 +37,19 @@ public class LoginController implements Initializable, Closeable {
     private static final Logger LOG = LogManager.getLogger(LoginController.class);
     private static List<BgSlideArtwork> loginBgOrig;
     private final Timer timer = new Timer();
+    public AnchorPane background;
     private boolean closed = false;
     public TextArea cookieField;
     public ImageView bgAuthorImg;
-    public ImageView bgImg;
     public Label bgTitleLbl;
     public Label bgAuthorLbl;
     public AnchorPane root;
-    public CachedImage curImg;
     public VBox loadPane;
     public Button okBtn;
     public HBox loggedPane;
     public ImageView userImg;
     public Label userNameLbl;
     public VBox loginPane;
-
-    private void setBackground() {
-        if (curImg == null) return;
-        Rectangle2D vp;
-        final double w = root.getWidth();
-        final double h = root.getHeight();
-        final double imgW = curImg.getImage().getWidth();
-        final double imgH = curImg.getImage().getHeight();
-        if (imgW / imgH > w / h) {
-            bgImg.setFitHeight(h);
-            bgImg.setFitWidth(0);
-            vp = new Rectangle2D((imgW - (imgH / h * w)) / 2, 0, imgW, imgH);
-        } else {
-            bgImg.setFitWidth(w);
-            bgImg.setFitHeight(0);
-            vp = new Rectangle2D(0, (imgH - imgW / w * h) / 2, imgW, imgH);
-        }
-
-        bgImg.setImage(curImg.getImage());
-        bgImg.setViewport(vp);
-    }
 
     private void loadLoginBg() {
         try {
@@ -128,9 +105,6 @@ public class LoginController implements Initializable, Closeable {
                     bgTitleLbl.setText(bgSlideArtwork.getTitle());
                     bgAuthorLbl.setText(bgSlideArtwork.getUserName());
 
-                    curImg = image;
-//                    setBackground();
-                    bgImg.setImage(image.getImage());
                     timer.schedule(new TimerTask() {
                         @Override
                         public void run() {

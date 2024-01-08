@@ -2,13 +2,13 @@ package xyz.zcraft.zpixiv.ui.controller;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
+import javafx.animation.RotateTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -32,17 +32,17 @@ public class DiscController implements Initializable {
     public Region refreshBtn;
     public ComboBox<PixivClient.Mode> modeCombo;
     public FlowPane artworkPane;
-    public ProgressBar loadBar;
     public HBox topBar;
     private TranslateTransition topBarAnimation;
+    private RotateTransition refreshBtnRotateAnim;
 
     public void refresh() {
         final FadeTransition fadeOutTransition = AnimationHelper.getFadeOutTransition(artworkPane);
         fadeOutTransition.setOnFinished((e) -> artworkPane.getChildren().clear());
         fadeOutTransition.playFromStart();
 
-        AnimationHelper.getFadeInTransition(loadBar).playFromStart();
         refreshBtn.setDisable(true);
+        refreshBtnRotateAnim.playFromStart();
         Main.getTpe().submit(() -> {
             try {
                 final List<PixivArtwork> discovery = Main.getClient().getDiscovery(modeCombo.getValue(), 50);
@@ -62,16 +62,12 @@ public class DiscController implements Initializable {
                 }
                 Platform.runLater(() -> {
                     refreshBtn.setDisable(false);
-                    AnimationHelper.getFadeOutTransition(loadBar).playFromStart();
                     AnimationHelper.getFadeInTransition(artworkPane).playFromStart();
                 });
             } catch (IOException e) {
                 Main.showAlert("错误", "无法打开发现");
                 LOG.error("Failed to open discovery.", e);
-                Platform.runLater(() -> {
-                    refreshBtn.setDisable(false);
-                    AnimationHelper.getFadeOutTransition(loadBar).playFromStart();
-                });
+                Platform.runLater(() -> refreshBtn.setDisable(false));
             }
         });
     }
@@ -94,10 +90,17 @@ public class DiscController implements Initializable {
             }
         });
         modeCombo.getItems().add(PixivClient.Mode.SAFE);
-        if (Main.getClient().getUserData().getXRestrict() != 1) {
+        if (Main.getClient().getUserData().getXRestrict() != 0) {
             modeCombo.getItems().addAll(PixivClient.Mode.R18, PixivClient.Mode.ALL);
+            modeCombo.setVisible(true);
+        } else {
+            modeCombo.setVisible(false);
         }
         modeCombo.getSelectionModel().select(PixivClient.Mode.SAFE);
+
+        refreshBtnRotateAnim = new RotateTransition(Duration.seconds(1), refreshBtn);
+        refreshBtnRotateAnim.setFromAngle(0);
+        refreshBtnRotateAnim.setToAngle(-360);
 
         artworkPane.setOnScroll(event -> {
             if (event.getDeltaY() < 0) {
@@ -120,6 +123,7 @@ public class DiscController implements Initializable {
                 topBarAnimation.playFromStart();
             }
         });
+
         refresh();
     }
 }
