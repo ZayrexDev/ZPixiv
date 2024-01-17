@@ -138,11 +138,12 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
         if (!loadPane.isVisible()) {
             final FadeTransition fadeInTransition = AnimationHelper.getFadeInTransition(loadPane);
             Platform.runLater(() -> {
+                loadProgressBar.setProgress(task.getProgress());
                 fadeInTransition.playFromStart();
                 loadPane.setVisible(true);
             });
         }
-//        refreshTasks();
+        refreshTaskName();
     }
 
     private synchronized void refreshTasks() {
@@ -160,7 +161,6 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
                         AnimationHelper.getFadeOutTransition(loadPane).playFromStart();
                     }
                 });
-                return;
             } else {
                 currentTask = tasks.poll();
                 if (currentTask.isFinished() || currentTask.isFailed()) {
@@ -177,19 +177,30 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
                     });
                 }
             }
+            refreshTaskName();
+        }
+    }
+
+    private void refreshTaskName() {
+        String str = tasks.stream().map(LoadTask::getName)
+                .reduce((s, s2) -> s.concat(" ").concat(s2))
+                .orElse("");
+
+        LOG.info("ORIG:{}", str);
+
+        if (currentTask != null) {
+            str = str.concat(" ").concat(currentTask.getName());
         }
 
-        tasks.stream().map(LoadTask::getName)
-                .reduce((s, s2) -> s.concat(" ").concat(s2))
-                .ifPresent(s -> {
-                    synchronized (this) {
-                        if (currentTask != null) {
-                            s = s.concat(" ").concat(currentTask.getName());
-                        }
-                        String finalS = s;
-                        Platform.runLater(() -> processLabel.setText(finalS));
-                    }
-                });
+        LOG.info("AFTER:{}", str);
+        synchronized (this) {
+            final String finalStr = str;
+            Platform.runLater(() -> {
+                synchronized (this) {
+                    processLabel.setText(finalStr);
+                }
+            });
+        }
     }
 
     @Override

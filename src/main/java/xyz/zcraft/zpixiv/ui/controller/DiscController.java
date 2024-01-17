@@ -1,9 +1,6 @@
 package xyz.zcraft.zpixiv.ui.controller;
 
-import javafx.animation.FadeTransition;
-import javafx.animation.Interpolator;
-import javafx.animation.RotateTransition;
-import javafx.animation.TranslateTransition;
+import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -61,6 +58,8 @@ public class DiscController implements Initializable {
                     });
                 }
                 Platform.runLater(() -> {
+                    refreshBtnRotateAnim.stop();
+                    refreshBtn.setRotate(0);
                     refreshBtn.setDisable(false);
                     AnimationHelper.getFadeInTransition(artworkPane).playFromStart();
                 });
@@ -99,6 +98,7 @@ public class DiscController implements Initializable {
         modeCombo.getSelectionModel().select(PixivClient.Mode.SAFE);
 
         refreshBtnRotateAnim = new RotateTransition(Duration.seconds(1), refreshBtn);
+        refreshBtnRotateAnim.setCycleCount(Animation.INDEFINITE);
         refreshBtnRotateAnim.setFromAngle(0);
         refreshBtnRotateAnim.setToAngle(-360);
 
