@@ -19,4 +19,5 @@ module ZPixiv {
     exports xyz.zcraft.zpixiv.ui;
     exports xyz.zcraft.zpixiv.ui.controller;
     exports xyz.zcraft.zpixiv.util;
+    exports xyz.zcraft.zpixiv.ui.container;
 }

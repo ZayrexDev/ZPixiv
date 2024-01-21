@@ -6,6 +6,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.text.Font?>
 
 <!--suppress JavaFxDefaultTag, JavaFxUnusedImports -->
@@ -22,6 +23,12 @@
             <Font name="System Bold" size="10.0" />
          </font>
       </Label>
+      <Label layoutX="10.0" layoutY="10.0" maxHeight="17.0" maxWidth="32.0" minHeight="17.0" minWidth="32.0" prefHeight="17.0" prefWidth="32.0" style="-fx-background-color: #FF4060; -fx-background-radius: 3;" text="R-18" textFill="WHITE" visible="false" AnchorPane.leftAnchor="5.0" AnchorPane.topAnchor="5.0" fx:id="xResLbl">
+         <padding>
+            <Insets bottom="1.0" left="2.0" right="2.0" top="1.0" />
+         </padding>
+      </Label>
+      <Region id="gifRegion" fx:id="gifReg" opacity="0.7" prefHeight="40.0" prefWidth="40.0" visible="false" AnchorPane.leftAnchor="50.0" AnchorPane.topAnchor="50.0" />
       <Label fx:id="loadLbl" alignment="CENTER" layoutX="55.0" layoutY="63.0" style="-fx-background-color: rgba(255,255,255,0.5);" text="Loading..." AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
    </children>
    <cursor>

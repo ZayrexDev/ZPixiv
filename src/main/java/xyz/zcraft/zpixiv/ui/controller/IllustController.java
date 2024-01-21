@@ -8,6 +8,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Region;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import xyz.zcraft.zpixiv.api.artwork.Identifier;
@@ -28,6 +29,8 @@ public class IllustController implements Initializable {
     public ImageView image;
     public Label loadLbl;
     public AnchorPane root;
+    public Region gifReg;
+    public Label xResLbl;
     private PixivArtwork artwork;
 
     public void load(PixivArtwork artwork) {
@@ -40,6 +43,8 @@ public class IllustController implements Initializable {
                 pageLbl.setText(String.valueOf(artwork.getOrigData().getPageCount()));
                 pageLbl.setVisible(true);
             }
+            xResLbl.setVisible(artwork.getOrigData().getXRestrict() == 1);
+            gifReg.setVisible(artwork.isGif());
         });
         Main.getTpe().submit(() -> {
             final Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Artwork, 0, Quality.Small);

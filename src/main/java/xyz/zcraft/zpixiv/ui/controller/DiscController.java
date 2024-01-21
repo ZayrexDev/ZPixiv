@@ -6,7 +6,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.control.ComboBox;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.util.Duration;
@@ -16,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import xyz.zcraft.zpixiv.api.PixivClient;
 import xyz.zcraft.zpixiv.api.artwork.PixivArtwork;
 import xyz.zcraft.zpixiv.ui.Main;
+import xyz.zcraft.zpixiv.ui.container.AnimatedFlowPane;
 import xyz.zcraft.zpixiv.util.AnimationHelper;
 import xyz.zcraft.zpixiv.util.ResourceLoader;
 
@@ -28,7 +28,7 @@ public class DiscController implements Initializable {
     private static final Logger LOG = LogManager.getLogger();
     public Region refreshBtn;
     public ComboBox<PixivClient.Mode> modeCombo;
-    public FlowPane artworkPane;
+    public AnimatedFlowPane artworkPane;
     public HBox topBar;
     private TranslateTransition topBarAnimation;
     private RotateTransition refreshBtnRotateAnim;

@@ -186,13 +186,10 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
                 .reduce((s, s2) -> s.concat(" ").concat(s2))
                 .orElse("");
 
-        LOG.info("ORIG:{}", str);
-
         if (currentTask != null) {
             str = str.concat(" ").concat(currentTask.getName());
         }
 
-        LOG.info("AFTER:{}", str);
         synchronized (this) {
             final String finalStr = str;
             Platform.runLater(() -> {
