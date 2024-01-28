@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import xyz.zcraft.zpixiv.ui.container.AnimatedFlowPane?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Line?>
+<?import javafx.scene.text.Font?>
+
+<!--suppress JavaFxDefaultTag, JavaFxUnusedImports -->
+
+<ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefHeight="418.0" prefWidth="556.0" vbarPolicy="ALWAYS" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="xyz.zcraft.zpixiv.ui.controller.UserController">
+   <content>
+      <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" stylesheets="@../css/user.css">
+         <children>
+            <Region fx:id="topImg" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS" />
+            <HBox prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+               <children>
+                  <ImageView fx:id="userImg" fitHeight="80.0" fitWidth="80.0" pickOnBounds="true" preserveRatio="true" translateY="-40.0" />
+                  <VBox spacing="10.0" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label fx:id="usernameLbl" text="USERNAME">
+                           <font>
+                              <Font name="System Bold" size="15.0" />
+                           </font>
+                        </Label>
+                        <Label fx:id="followedLbl" text="000 已关注" textFill="#6b6b6b" />
+                        <Label fx:id="descLbl" text="DESC" wrapText="true" />
+                     </children>
+                  </VBox>
+               </children>
+               <padding>
+                  <Insets left="20.0" right="20.0" top="20.0" />
+               </padding>
+            </HBox>
+            <AnchorPane VBox.vgrow="ALWAYS">
+               <children>
+                  <Line fx:id="tabLine" endX="72.0" fill="#0096fa" stroke="#0096fa" strokeWidth="2.0" AnchorPane.topAnchor="0.0" />
+                  <HBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="20.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <Label fx:id="homeBtn" onMouseClicked="#switchHome" styleClass="tabBtnLbl" text="主页">
+                           <cursor>
+                              <Cursor fx:constant="HAND" />
+                           </cursor>
+                           <padding>
+                              <Insets bottom="5.0" left="20.0" right="20.0" top="5.0" />
+                           </padding>
+                           <font>
+                              <Font name="System Bold" size="16.0" />
+                           </font>
+                        </Label>
+                        <Label fx:id="illustsBtn" onMouseClicked="#switchIllusts" styleClass="tabBtnLbl" text="插画" textFill="#6e6e6e">
+                           <cursor>
+                              <Cursor fx:constant="HAND" />
+                           </cursor>
+                           <padding>
+                              <Insets bottom="5.0" left="20.0" right="20.0" top="5.0" />
+                           </padding>
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </Label>
+                        <Label fx:id="bookmarksBtn" onMouseClicked="#switchBookmarks" styleClass="tabBtnLbl" text="收藏" textFill="#6e6e6e">
+                           <cursor>
+                              <Cursor fx:constant="HAND" />
+                           </cursor>
+                           <padding>
+                              <Insets bottom="5.0" left="20.0" right="20.0" top="5.0" />
+                           </padding>
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </Label>
+                     </children>
+                  </HBox>
+               </children>
+               <VBox.margin>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </VBox.margin>
+            </AnchorPane>
+            <AnchorPane fx:id="contentPane" prefHeight="200.0" prefWidth="200.0">
+               <children>
+                  <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <Label text="插画·漫画">
+                           <font>
+                              <Font name="System Bold" size="17.0" />
+                           </font>
+                        </Label>
+                        <AnimatedFlowPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
+                     </children>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </VBox>
+               </children>
+            </AnchorPane>
+         </children>
+      </VBox>
+   </content>
+</ScrollPane>

@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static xyz.zcraft.zpixiv.api.PixivClient.Urls.DISCOVERY;
+import static xyz.zcraft.zpixiv.api.PixivClient.Urls.USER_TOP;
 
 @SuppressWarnings("unused")
 public class PixivClient {
@@ -296,6 +297,28 @@ public class PixivClient {
             return true;
         } else return false;
     }
+
+    public PixivArtwork getFullData(PixivArtwork artwork) throws IOException {
+        return getArtwork(artwork.getOrigData().getId());
+    }
+
+    public List<PixivArtwork> getUserTopArtworks(String id) throws IOException {
+        LOG.info("Getting user {} top artworks", id);
+        Connection c = getConnection(String.format(USER_TOP, id).concat("&lang=").concat(getPixivLanguageTag()), Connection.Method.GET);
+
+        final String responseStr = c.get().body().ownText();
+        final JSONObject response = JSONObject.parseObject(responseStr);
+
+        final LinkedList<PixivArtwork> artworks = new LinkedList<>();
+        final JSONObject body = response.getJSONObject("body");
+        body.getJSONObject("illusts").forEach((s, o) -> artworks.add(new PixivArtwork(((JSONObject)o).to(PixivArtwork.OrigData.class))));
+        body.getJSONObject("manga").forEach((s, o) -> artworks.add(new PixivArtwork(((JSONObject)o).to(PixivArtwork.OrigData.class))));
+
+        artworks.sort(Comparator.comparingInt(o -> Integer.parseInt(o.getOrigData().getId())));
+
+        return artworks;
+    }
+
 //    public static List<String> buildQueryString(Set<String> ids) {
 //        LinkedList<String> list = new LinkedList<>();
 //        StringBuilder s = new StringBuilder();
@@ -318,10 +341,11 @@ public class PixivClient {
 //
 //        return list;
 //    }
-//    public static String getArtworkPageUrl(PixivArtwork artwork) {
 
+//    public static String getArtworkPageUrl(PixivArtwork artwork) {
 //        return ARTWORK + artwork.getId();
 //    }
+
 //    public static void classifyArtwork(List<PixivArtwork> orig, JSONObject pageJson) {
 //        LinkedList<String> recommendIDs = new LinkedList<>();
 //        LinkedList<String> recommendTagIDs = new LinkedList<>();
@@ -366,6 +390,7 @@ public class PixivClient {
 //        }
 
 //    }
+
 //    public static List<PixivArtwork> selectArtworks(List<PixivArtwork> orig, int limit, boolean follow, boolean recommend, boolean recommendTag, boolean recommendUser, boolean other) {
 //        LinkedList<PixivArtwork> art = new LinkedList<>();
 //        for (PixivArtwork artwork : orig) {
@@ -380,10 +405,9 @@ public class PixivClient {
 //                break;
 //            }
 //        }
-//
-
 //        return art;
 //    }
+
 //    public LinkedList<String> getRankingIDs(String major, String minor) throws IOException {
 //        String url = RANKING.concat("?mode=").concat(major).concat(minor != null && !minor.isEmpty() ? "&content=".concat(minor) : "");
 //        HashMap<String, String> cookie = parseCookie(cookieString);
@@ -400,8 +424,8 @@ public class PixivClient {
 //        }
 //
 //        return ids;
-
 //    }
+
 //    public List<PixivArtwork> searchTopArtworks(String keyword) throws IOException {
 //        HashMap<String, String> cookie = parseCookie(cookieString);
 //        Connection c = Jsoup.connect(String.format(SEARCH_TOP, keyword).concat("?lang=").concat(getPixivLanguageTag())).ignoreContentType(true).method(Connection.Method.GET).cookies(cookie).timeout(10 * 1000);
@@ -432,9 +456,7 @@ public class PixivClient {
 //            e.setFrom(From.Search);
 //            artworks.add(e);
 //        }
-//
 //        return artworks;
-
 //    }
 //    public List<PixivArtwork> searchIllustArtworks(String keyword, Mode mode, int page) throws IOException {
 //        HashMap<String, String> cookie = parseCookie(cookieString);
@@ -469,7 +491,6 @@ public class PixivClient {
 //        }
 //
 //        return artworks;
-
 //    }
 //    public List<PixivArtwork> searchMangaArtworks(String keyword, Mode mode, int page) throws IOException {
 //        HashMap<String, String> cookie = parseCookie(cookieString);
@@ -504,11 +525,7 @@ public class PixivClient {
 //        }
 //
 //        return artworks;
-
 //    }
-    public PixivArtwork getFullData(PixivArtwork artwork) throws IOException {
-        return getArtwork(artwork.getOrigData().getId());
-    }
 
 //    public Set<String> fetchUser(String uid) throws IOException {
 //        Connection c = Jsoup.connect(String.format(USER, uid).concat("lang=").concat(getPixivLanguageTag())).ignoreContentType(true).method(Connection.Method.GET).timeout(10 * 1000);
@@ -633,6 +650,7 @@ public class PixivClient {
         public static final String RELATED = "https://www.pixiv.net/ajax/illust/%s/recommend/init?limit=%d";
         public static final String ARTWORK = "https://www.pixiv.net/artworks/";
         public static final String USER = "https://www.pixiv.net/ajax/user/%s/profile/all?";
+        public static final String USER_TOP = "https://www.pixiv.net/ajax/user/%s/profile/top?";
         public static final String USER_TAGS = "https://www.pixiv.net/ajax/tags/frequent/illust?%s";
         public static final String USER_WORKS = "https://www.pixiv.net/ajax/user/%s/profile/illusts?%s&work_category=illust&is_first_page=1";
         public static final String DISCOVERY = "https://www.pixiv.net/ajax/discovery/artworks?mode=%s&limit=%d";
