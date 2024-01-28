@@ -290,6 +290,7 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
 
             if (artwork.isGif()) {
                 Main.getTpe().submit(getGifLoadRunnable());
+                Main.getTpe().submit(getPreviewLoadRunnable());
             } else {
                 Main.getTpe().submit(getImageLoadRunnable());
             }
@@ -297,7 +298,6 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
 
         LOG.info("Loading artwork {} complete", artwork.getOrigData().getId());
     }
-
     private Runnable getGifLoadRunnable() {
         return () -> {
             LOG.info("Loading gif artwork {}", artwork.getOrigData().getId());
@@ -309,14 +309,11 @@ public class ArtworkController implements Initializable, Refreshable, Closeable 
             Identifier identifier = Identifier.of(artwork.getOrigData().getId(), Identifier.Type.Gif, 0, Quality.Original);
             final CachedImage cachedImage;
             try {
-                cachedImage = LoadHelper.loadImage(artwork.getGifData().getSrc(), identifier, 3, t);
+                cachedImage = LoadHelper.loadGif(artwork.getGifData(), identifier, 3, t, t1);
                 images[0] = cachedImage;
                 Platform.runLater(() -> imgView.setImage(cachedImage.getImage()));
-                t1.setFinished(true);
             } catch (Exception e) {
                 LOG.error("Failed to parse gif.", e);
-                t.setFailed(true);
-                t1.setFailed(true);
                 Main.showAlert("错误", "加载动图时出现错误");
             }
         };

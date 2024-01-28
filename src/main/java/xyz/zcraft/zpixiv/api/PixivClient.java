@@ -214,6 +214,10 @@ public class PixivClient {
         final JSONObject userJsonObj = content.getJSONObject("user").getJSONObject(pixivArtwork.getOrigData().getUserId());
         pixivArtwork.setAuthor(userJsonObj.to(PixivUser.class));
 
+        if(pixivArtwork.isGif()) {
+            getGifData(pixivArtwork);
+        }
+
         return pixivArtwork;
     }
 
